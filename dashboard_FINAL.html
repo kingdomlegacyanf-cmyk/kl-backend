@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingdom Legacy — Diagnóstico Financiero Integral</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+function calcFogape() {
+  const cuota     = parseFloat(document.getElementById('inp-cuota').value) || 0;
+  const pagadas   = parseFloat(document.getElementById('inp-pagadas').value) || 0;
+  const totalCuotas = parseFloat(document.getElementById('inp-total-cuotas').value) || 0;
+  const fecha     = document.getElementById('inp-fecha').value || '—';
+  const restantes = totalCuotas - pagadas;
+  const deudaTotal = cuota * restantes;
+
+  S.fog = { cuota, pagadas, totalCuotas, restantes, deudaTotal, fecha };
+
+  document.getElementById('fog-total').textContent = fmt(deudaTotal);
+  document.getElementById('fog-cuota').textContent = fmt(cuota);
+  document.getElementById('fog-cuotas').textContent = restantes + ' cuotas';
+  document.getElementById('fog-fecha').textContent = fecha;
+  document.getElementById('fogape-grid').style.display = 'grid';
+
+  // Update diagnostico with FOGAPE data
+  const fogIns = document.createElement('div');
+  fogIns.className = 'insight red';
+  fogIns.innerHTML = `<div class="insight-title">🏦 Crédito FOGAPE — Banco de Chile</div>
+    <div class="insight-body">
+      Deuda restante: <strong>${fmt(deudaTotal)}</strong> en ${restantes} cuotas hasta ${fecha}.<br>
+      Carga mensual fija: <strong>${fmt(cuota)}</strong> — compromiso hasta ${fecha}.<br>
+      Esta obligación debe considerarse en el flujo de caja mensual proyectado.
+    </div>`;
+
+  const diag = document.getElementById('diagnosticoContent');
+  if(diag) diag.appendChild(fogIns);
+
+  alert('✓ Datos FOGAPE agregados al diagnóstico');
+}
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+function calcFogape() {
+  const cuota     = parseFloat(document.getElementById('inp-cuota').value) || 0;
+  const pagadas   = parseFloat(document.getElementById('inp-pagadas').value) || 0;
+  const totalCuotas = parseFloat(document.getElementById('inp-total-cuotas').value) || 0;
+  const fecha     = document.getElementById('inp-fecha').value || '—';
+  const restantes = totalCuotas - pagadas;
+  const deudaTotal = cuota * restantes;
+
+  S.fog = { cuota, pagadas, totalCuotas, restantes, deudaTotal, fecha };
+
+  document.getElementById('fog-total').textContent = fmt(deudaTotal);
+  document.getElementById('fog-cuota').textContent = fmt(cuota);
+  document.getElementById('fog-cuotas').textContent = restantes + ' cuotas';
+  document.getElementById('fog-fecha').textContent = fecha;
+  document.getElementById('fogape-grid').style.display = 'grid';
+
+  // Update diagnostico with FOGAPE data
+  const fogIns = document.createElement('div');
+  fogIns.className = 'insight red';
+  fogIns.innerHTML = `<div class="insight-title">🏦 Crédito FOGAPE — Banco de Chile</div>
+    <div class="insight-body">
+      Deuda restante: <strong>${fmt(deudaTotal)}</strong> en ${restantes} cuotas hasta ${fecha}.<br>
+      Carga mensual fija: <strong>${fmt(cuota)}</strong> — compromiso hasta ${fecha}.<br>
+      Esta obligación debe considerarse en el flujo de caja mensual proyectado.
+    </div>`;
+
+  const diag = document.getElementById('diagnosticoContent');
+  if(diag) diag.appendChild(fogIns);
+
+  alert('✓ Datos FOGAPE agregados al diagnóstico');
+}
+
+</script>
+<style>
+:root{--navy:#1C2E4A;--gold:#B8962E;--gold-l:#D4AF5A;--bg:#0F1923;--bg2:#162030;--bg3:#1E2D40;--border:#2A3F58;--text:#E8EFF7;--text2:#8BA3BE;--text3:#5A7A9A;--green:#2ECC8A;--green-bg:rgba(46,204,138,.1);--red:#E5504A;--red-bg:rgba(229,80,74,.1);--amber:#F5A623;--amber-bg:rgba(245,166,35,.1);--blue:#4A90D9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.topbar{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-crown{font-size:22px;color:var(--gold)}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:.06em;color:#fff}
+.brand-sep{width:1px;height:24px;background:var(--border)}
+.brand-sub{font-size:12px;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.company-tag{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:var(--text2)}
+.company-tag span{color:var(--text);font-weight:600}
+.btn{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:2px}
+.tab{padding:13px 18px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.main{padding:24px 28px;max-width:1400px}
+.sec-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.green::before{background:var(--green)}.kpi.red::before{background:var(--red)}.kpi.amber::before{background:var(--amber)}.kpi.blue::before{background:var(--blue)}
+.kpi-label{font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:500;letter-spacing:.04em}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);line-height:1;margin-bottom:6px}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.sem{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.sem.verde{background:var(--green-bg);color:var(--green)}.sem.rojo{background:var(--red-bg);color:var(--red)}.sem.amarillo{background:var(--amber-bg);color:var(--amber)}
+.sem::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.chart-sub{font-size:11px;color:var(--text3);margin-bottom:16px}
+.chart-wrap{position:relative;height:220px}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+.insight{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;border-left:3px solid}
+.insight.green{border-left-color:var(--green)}.insight.red{border-left-color:var(--red)}.insight.amber{border-left-color:var(--amber)}.insight.blue{border-left-color:var(--blue)}
+.insight-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.insight-body{font-size:12px;color:var(--text2);line-height:1.6}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-weight:600;font-size:11px;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid rgba(42,63,88,.4);color:var(--text2)}
+td.num{text-align:right;font-family:'Courier New',monospace;color:var(--text)}
+td.pos{color:var(--green);text-align:right;font-weight:600}td.neg{color:var(--red);text-align:right;font-weight:600}
+tr:hover td{background:var(--bg3)}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(184,150,46,.05)}
+.upload-icon{font-size:32px;margin-bottom:10px}.upload-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}.upload-sub{font-size:12px;color:var(--text3)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.doc-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px}
+.doc-icon{font-size:24px;flex-shrink:0}.doc-name{font-size:12px;font-weight:600;color:var(--text)}.doc-status{font-size:11px;margin-top:3px}
+.status-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg3);border-radius:8px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--text3)}
+.alert{background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:14px 18px;margin-bottom:16px}
+.alert-title{font-weight:600;font-size:13px;color:var(--red);margin-bottom:4px}.alert-body{font-size:12px;color:var(--text2);line-height:1.5}
+.score-wrap{display:flex;flex-direction:column;align-items:center;padding:16px 0}
+.ring-wrap{position:relative;width:130px;height:130px;margin:0 auto 14px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-score{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ring-num{font-size:32px;font-weight:700;color:var(--text)}.ring-label{font-size:11px;color:var(--text3)}
+.panel{display:none}.panel.active{display:block}
+#fileInput{display:none}
+@media(max-width:768px){.chart-grid,.insight-grid,.doc-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-crown">&#9819;</span>
+    <span class="brand-name">KINGDOM LEGACY</span>
+    <div class="brand-sep"></div>
+    <span class="brand-sub">Diagn&#243;stico Financiero Integral</span>
+  </div>
+  <div class="topbar-right">
+    <div class="company-tag">Empresa: <span id="companyName">Sin empresa cargada</span></div>
+    <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">+ Cargar documentos</button>
+    <button class="btn btn-gold" onclick="window.print()">Exportar PDF</button>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="showTab('resumen',this)">Resumen ejecutivo</div>
+  <div class="tab" onclick="showTab('resultado',this)">Estado de resultado</div>
+  <div class="tab" onclick="showTab('balance',this)">Balance</div>
+  <div class="tab" onclick="showTab('tributario',this)">Tributario</div>
+  <div class="tab" onclick="showTab('diagnostico',this)">Diagn&#243;stico KL</div>
+  <div class="tab" onclick="showTab('carga',this)">Cargar documentos</div>
+</div>
+<div class="main">
+
+<!-- RESUMEN -->
+<div id="tab-resumen" class="panel active">
+  <div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Sin documentos cargados &#8212; ve a "Cargar documentos" para comenzar</span></div>
+  <div id="alertaRed" class="alert" style="display:none"><div class="alert-title" id="alertaTitulo"></div><div class="alert-body" id="alertaCuerpo"></div></div>
+  <div class="sec-label">Indicadores clave</div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><div class="kpi-label">VENTAS ANUALES</div><div class="kpi-value" id="k-ventas">&#8212;</div><div class="kpi-sub">Ingresos del giro</div></div>
+    <div class="kpi" id="k-resultado-card"><div class="kpi-label">RESULTADO EJERCICIO</div><div class="kpi-value" id="k-resultado">&#8212;</div><div class="kpi-sub" id="k-resultado-sub">Utilidad o p&#233;rdida</div></div>
+    <div class="kpi" id="k-margen-card"><div class="kpi-label">MARGEN BRUTO</div><div class="kpi-value" id="k-margen">&#8212;</div><div class="kpi-sub">Ventas - Costo de venta</div></div>
+    <div class="kpi" id="k-endeud-card"><div class="kpi-label">ENDEUDAMIENTO</div><div class="kpi-value" id="k-endeud">&#8212;</div><div class="kpi-sub">Pasivo / Activo</div></div>
+    <div class="kpi green"><div class="kpi-label">CAJA DISPONIBLE</div><div class="kpi-value" id="k-caja">&#8212;</div><div class="kpi-sub">Efectivo al cierre</div></div>
+    <div class="kpi amber"><div class="kpi-label">SCORE KL</div><div class="kpi-value" id="k-score">&#8212;</div><div class="kpi-sub" id="k-score-label">Pendiente</div></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Ingresos, costos y resultado</div><div class="chart-sub">Estructura financiera del ejercicio</div><div class="chart-wrap"><canvas id="chartWaterfall"></canvas></div></div>
+    <div class="chart-card">
+      <div class="score-wrap">
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="54" fill="none" stroke="#1E2D40" stroke-width="13"/>
+            <circle cx="65" cy="65" r="54" fill="none" stroke="#B8962E" stroke-width="13" stroke-dasharray="339" stroke-dashoffset="339" stroke-linecap="round" id="ringCircle"/>
+          </svg>
+          <div class="ring-score"><div class="ring-num" id="ringNum">&#8212;</div><div class="ring-label">/ 100</div></div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Score Kingdom Legacy</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%">
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Rentabilidad</div><div class="sem" id="s-rent">&#8212;</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Liquidez</div><div class="sem" id="s-liq">&#8212;</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Endeudamiento</div><div class="sem" id="s-end">&#8212;</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Cumplimiento SII</div><div class="sem" id="s-sii">&#8212;</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec-label">Observaciones</div>
+  <div class="insight-grid" id="insightContainer">
+    <div class="insight blue" style="grid-column:span 2"><div class="insight-title">Sin datos cargados</div><div class="insight-body">Carga los documentos del cliente en la pesta&#241;a "Cargar documentos" para generar el diagn&#243;stico.</div></div>
+  </div>
+</div>
+
+<!-- ESTADO RESULTADO -->
+<div id="tab-resultado" class="panel">
+  <div class="sec-label">Estado de resultado</div>
+  <div class="table-card"><table><thead><tr><th>Concepto</th><th style="text-align:right">Monto ($)</th><th style="text-align:right">% sobre ventas</th><th style="text-align:center">Evaluaci&#243;n</th></tr></thead><tbody id="tablaResultado"></tbody></table></div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Composici&#243;n de costos</div><div class="chart-sub">Distribuci&#243;n sobre ventas</div><div class="chart-wrap"><canvas id="chartCostos"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Cascada de resultado</div><div class="chart-sub">De ventas a resultado neto</div><div class="chart-wrap"><canvas id="chartCascada"></canvas></div></div>
+  </div>
+</div>
+
+<!-- BALANCE -->
+<div id="tab-balance" class="panel">
+  <div class="sec-label">Balance general</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi blue"><div class="kpi-label">TOTAL ACTIVOS</div><div class="kpi-value" id="b-activo">&#8212;</div></div>
+    <div class="kpi" id="b-pasivo-card"><div class="kpi-label">TOTAL PASIVOS</div><div class="kpi-value" id="b-pasivo">&#8212;</div></div>
+    <div class="kpi green"><div class="kpi-label">PATRIMONIO</div><div class="kpi-value" id="b-patrimonio">&#8212;</div></div>
+    <div class="kpi" id="b-ratio-card"><div class="kpi-label">RAZ&#211;N CORRIENTE</div><div class="kpi-value" id="b-ratio">&#8212;</div><div class="kpi-sub">Activo / Pasivo</div></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Activos vs Pasivos vs Patrimonio</div><div class="chart-sub">Estructura del balance</div><div class="chart-wrap"><canvas id="chartBalance"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Composici&#243;n del pasivo</div><div class="chart-sub">Distribuci&#243;n de obligaciones</div><div class="chart-wrap"><canvas id="chartPasivo"></canvas></div></div>
+  </div>
+  <div class="table-card"><table><thead><tr><th>Cuenta</th><th style="text-align:right">Monto ($)</th><th style="text-align:center">Tipo</th><th style="text-align:center">Estado</th></tr></thead><tbody id="tablaBalance"></tbody></table></div>
+</div>
+
+<!-- TRIBUTARIO -->
+<div id="tab-tributario" class="panel">
+  <div class="sec-label">Situaci&#243;n tributaria</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi blue"><div class="kpi-label">A&#209;O TRIBUTARIO</div><div class="kpi-value" id="t-año">&#8212;</div></div>
+    <div class="kpi green"><div class="kpi-label">PPM ACUMULADO</div><div class="kpi-value" id="t-ppm">&#8212;</div></div>
+    <div class="kpi" id="t-devol-card"><div class="kpi-label">DEVOLUCI&#211;N SOLICITADA</div><div class="kpi-value" id="t-devol">&#8212;</div></div>
+    <div class="kpi" id="t-resultado-card"><div class="kpi-label">RESULTADO RENTA</div><div class="kpi-value" id="t-resultado">&#8212;</div></div>
+  </div>
+  <div class="insight-grid" id="ivaInsights"></div>
+
+  <div class="sec-label" style="margin-top:20px">Deuda FOGAPE / Crédito bancario</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)" id="fogape-grid" style="display:none">
+    <div class="kpi red"><div class="kpi-label">DEUDA TOTAL RESTANTE</div><div class="kpi-value" id="fog-total">—</div><div class="kpi-sub">Capital pendiente</div></div>
+    <div class="kpi amber"><div class="kpi-label">CUOTA MENSUAL</div><div class="kpi-value" id="fog-cuota">—</div><div class="kpi-sub">Carga fija mensual</div></div>
+    <div class="kpi blue"><div class="kpi-label">CUOTAS RESTANTES</div><div class="kpi-value" id="fog-cuotas">—</div><div class="kpi-sub">Meses hasta término</div></div>
+    <div class="kpi" id="fog-estado-card"><div class="kpi-label">FECHA TÉRMINO</div><div class="kpi-value" id="fog-fecha">—</div><div class="kpi-sub">Vencimiento del crédito</div></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px" id="fogape-form-card">
+    <div class="chart-title">Ingresar datos FOGAPE manualmente</div>
+    <div class="chart-sub">Cuando el PDF del banco no es legible, ingresa los datos aquí</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:12px">
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">CUOTA MENSUAL ($)</div>
+        <input id="inp-cuota" type="number" placeholder="1740628" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">CUOTAS PAGADAS</div>
+        <input id="inp-pagadas" type="number" placeholder="10" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">TOTAL CUOTAS</div>
+        <input id="inp-total-cuotas" type="number" placeholder="47" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">FECHA TÉRMINO</div>
+        <input id="inp-fecha" type="text" placeholder="05/07/2029" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px">
+      </div>
+    </div>
+    <button onclick="calcFogape()" style="margin-top:12px;padding:8px 20px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Calcular y agregar al diagnóstico</button>
+  </div>
+</div>
+
+<!-- DIAGNOSTICO -->
+<div id="tab-diagnostico" class="panel">
+  <div class="sec-label">Diagn&#243;stico Kingdom Legacy</div>
+  <div id="diagnosticoContent"><div class="insight blue"><div class="insight-title">Sin datos</div><div class="insight-body">Carga los documentos del cliente para generar el diagn&#243;stico completo.</div></div></div>
+</div>
+
+<!-- CARGA -->
+<div id="tab-carga" class="panel">
+  <div class="sec-label">Cargar documentos del cliente</div>
+  <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls" onchange="handleFiles(this.files)">
+  <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleFiles(event.dataTransfer.files)" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">&#128194;</div>
+    <div class="upload-title">Arrastra o haz clic para cargar documentos</div>
+    <div class="upload-sub">Balance tributario &#183; Balance clasificado &#183; F22 &#183; Certificado de renta &#183; Carpeta tributaria SII</div>
+  </div>
+  <div class="sec-label">Documentos</div>
+  <div class="doc-grid" id="docGrid">
+    <div class="doc-card" id="doc-bt" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Balance tributario</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-bc" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Balance clasificado</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-f22" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">F22 Renta anual</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-cert" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Certificado de renta</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-fog" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Deuda FOGAPE</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-f29" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Carpeta tributaria SII</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+  </div>
+  <div id="uploadLog" style="font-size:12px;color:var(--text2);line-height:2;margin-top:12px"></div>
+</div>
+
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const S={company:null,bt:null,bc:null,f22:null,cert:null,fog:null};
+let CH={};
+const GRID='rgba(42,63,88,0.6)',TICK='#5A7A9A';
+
+function fmt(n){if(!n||isNaN(n))return'—';const a=Math.abs(n);let s=a>=1e9?(a/1e9).toFixed(1)+'B':a>=1e6?(a/1e6).toFixed(1)+'M':a>=1e3?(a/1e3).toFixed(0)+'K':Math.round(a).toLocaleString('es-CL');return(n<0?'-':'')+'$'+s;}
+function fmtF(n){if(!n||isNaN(n))return'—';return(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString('es-CL');}
+function pct(n,t){if(!t)return'—';return(n/t*100).toFixed(1)+'%';}
+function cN(s){if(!s)return 0;try{return parseInt(String(s).replace(/[.,\s]/g,''))||0;}catch{return 0;}}
+function fV(text,patterns){for(const p of patterns){const m=text.match(new RegExp(p,'i'));if(m)return cN(m[1]);}return 0;}
+function dC(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+function showTab(id,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');el.classList.add('active');}
+function setSem(id,tipo,label){const el=document.getElementById(id);el.className='sem '+tipo;el.textContent=label;}
+function markDoc(id,ok){const c=document.getElementById(id);if(!c)return;c.style.opacity='1';const s=c.querySelector('.doc-status');s.textContent=ok?'Procesado ✓':'Error';s.style.color=ok?'var(--green)':'var(--red)';}
+
+async function extractPDFText(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const c=await page.getTextContent();text+=c.items.map(it=>it.str).join(' ')+'\n';}
+  return text;
+}
+
+function parseBT(t){return{ventas:fV(t,['5101-01 VENTAS ([\\d.,]+)']),costo:fV(t,['4101-01 COSTO DE VENTA ([\\d.,]+)']),remuner:fV(t,['4201-01 REMUNERACIONES[\\w\\s]+?([\\d.,]+)']),honor:fV(t,['4201-02 HONORARIOS[\\w\\s]+?([\\d.,]+)']),gastos:fV(t,['4201-08 GASTOS GENERALES ([\\d.,]+)']),arriendos:fV(t,['4201-30 ARRIENDOS[\\w\\s]+?([\\d.,]+)']),comisiones:fV(t,['4205-03 COMISIONES ([\\d.,]+)']),intereses:fV(t,['4401-01 INTERESES[\\w\\s]+?([\\d.,]+)']),perdida:fV(t,['Perdida Ejercicio ([\\d.,]+)','PERDIDA EJERCICIO ([\\d.,]+)']),caja:fV(t,['1101-01 CUENTA CAJA ([\\d.,]+)']),clientes:fV(t,['1104-01 CLIENTES ([\\d.,]+)']),deuda:fV(t,['2105-08 PRESTAMO[\\w\\s]+?([\\d.,]+)'])};}
+function parseF22(t){return{rut:t.match(/(\d{7,8}-[\dkK])/)?.[1]||'',empresa:t.match(/01 ([A-ZÁÉÍÓÚÑ\s]+?) (?:Calle|06)/)?.[1]?.trim()||'',año:t.match(/AÑO TRIBUTARIO (\d{4})/)?.[1]||'2026',ingresos:fV(t,['1410[\\w\\s]+?([\\d.,]+)','Total de ingresos anuales ([\\d.,]+)']),egresos:fV(t,['1430[\\w\\s]+?([\\d.,]+)','Total de egresos anuales ([\\d.,]+)']),ventas:fV(t,['1400[\\w\\s]+?([\\d.,]+)','Ingresos del giro percibidos ([\\d.,]+)']),ppm:fV(t,['36 PPM[\\w\\s]+?([\\d.,]+)','PPM y remanente[\\w\\s]+?([\\d.,]+)']),devolucion:fV(t,['87 ([\\d.,]+)','MONTO DEVOLUCIÓN ([\\d.,]+)']),resultado:fV(t,['305 RESULTADO[\\w\\s]+?([\\d.,]+)'])};}
+function parseBC(t){return{activos:fV(t,['TOTAL ACTIVOS ([\\d.,]+)']),pasivos:fV(t,['TOTAL PASIVOS ([\\d.,]+)']),disponible:fV(t,['1101 DISPONIBLE ([\\d.,]+)']),cuentas_pagar:fV(t,['2105 CUENTAS POR PAGAR ([\\d.,]+)']),capital:fV(t,['2301 CAPITAL ([\\d.,]+)']),perdida_ej:fV(t,['PERDIDA EJERCICIO ([\\d.,]+)'])};}
+
+function detectType(text,fname){
+  const t=text.toUpperCase();
+  // IMPORTANT: check clasificado BEFORE general (clasificado also contains 'BALANCE GENERAL')
+  if(t.includes('BALANCE CLASIFICADO'))return'bc';
+  if(t.includes('BALANCE GENERAL')&&t.includes('SUMAS SALDOS'))return'bt';
+  if(t.includes('FORM. 22')||t.includes('IMPUESTOS ANUALES A LA RENTA'))return'f22';
+  if(t.includes('CERTIFICADO DECLARACI')&&t.includes('RENTA'))return'cert';
+  if(t.includes('FOGAPE')||t.includes('GARANTIA ESTATAL'))return'fog';
+  if(t.includes('FORMULARIO 29')||t.includes('DECLARACION MENSUAL'))return'f29';
+  if(t.includes('BANCO DE CHILE')&&text.length<600)return'fog_scan';
+  return'unknown';
+}
+
+async function handleFiles(files){
+  const log=document.getElementById('uploadLog');
+  for(const file of Array.from(files)){
+    log.innerHTML+=`<div>⏳ Procesando <strong>${file.name}</strong>...</div>`;
+    try{
+      const text=await extractPDFText(file);
+      const type=detectType(text,file.name);
+      log.innerHTML+=`<div style="color:var(--text3)">→ Tipo: <strong>${type}</strong></div>`;
+      if(type==='bt'){S.bt=parseBT(text);markDoc('doc-bt',true);log.innerHTML+=`<div style="color:var(--green)">✓ Balance tributario procesado. Ventas: ${fmt(S.bt.ventas)}</div>`;}
+      else if(type==='bc'){S.bc=parseBC(text);markDoc('doc-bc',true);log.innerHTML+=`<div style="color:var(--green)">✓ Balance clasificado procesado. Activos: ${fmt(S.bc.activos)}</div>`;}
+      else if(type==='f22'){S.f22=parseF22(text);if(S.f22.empresa){S.company=S.f22.empresa;document.getElementById('companyName').textContent=S.company;}markDoc('doc-f22',true);log.innerHTML+=`<div style="color:var(--green)">✓ F22 procesado — ${S.company||''}</div>`;}
+      else if(type==='cert'){S.cert={text};markDoc('doc-cert',true);log.innerHTML+=`<div style="color:var(--green)">✓ Certificado de renta procesado</div>`;}
+      else if(type==='fog'){S.fog={text};markDoc('doc-fog',true);log.innerHTML+=`<div style="color:var(--green)">✓ Documento FOGAPE procesado</div>`;}
+      else if(type==='fog_scan'){markDoc('doc-fog',false);log.innerHTML+=`<div style="color:var(--amber)">⚠ Documento FOGAPE/banco escaneado — no se pueden extraer datos automáticamente. Se registra como referencia.</div>`;}
+      else if(type==='f29'){markDoc('doc-f29',true);log.innerHTML+=`<div style="color:var(--green)">✓ Carpeta tributaria SII procesada</div>`;}
+      else{log.innerHTML+=`<div style="color:var(--amber)">⚠ Tipo de documento no reconocido</div>`;}
+    }catch(err){log.innerHTML+=`<div style="color:var(--red)">✗ Error: ${err.message}</div>`;}
+  }
+  updateDashboard();
+  log.innerHTML+=`<div style="color:var(--green);font-weight:600">✓ Dashboard actualizado — ve a Resumen ejecutivo</div>`;
+}
+
+function calcScore(v,c,p,ta,tp,ebitda){
+  let s=0;
+  const m=v?(v-c)/v*100:0;
+  s+=m>40?25:m>25?18:m>10?10:0;
+  s+=p===0?25:0;
+  const e=ta?tp/ta*100:100;
+  s+=e<50?25:e<70?15:e<90?5:0;
+  s+=ebitda>0?25:ebitda>-v*0.05?10:0;
+  return Math.round(Math.min(100,Math.max(0,s)));
+}
+
+function updateDashboard(){
+  const bt=S.bt,bc=S.bc,f22=S.f22;
+  if(!bt&&!f22)return;
+  const v=f22?.ventas||bt?.ventas||0;
+  const c=bt?.costo||0,r=bt?.remuner||0,h=bt?.honor||0,g=bt?.gastos||0,a=bt?.arriendos||0,co=bt?.comisiones||0,i=bt?.intereses||0;
+  const p=bt?.perdida||0;
+  const mb=v-c,tg=r+h+g+a+co+i,ebitda=mb-tg;
+  const ta=bc?.activos||0,tp=bc?.pasivos||0,pat=ta-tp;
+  const caja=bc?.disponible||bt?.caja||0;
+  const end=ta?tp/ta*100:0;
+  const score=calcScore(v,c,p,ta,tp,ebitda);
+  const mbPct=v?mb/v*100:0;
+
+  document.getElementById('statusDot').style.background='var(--green)';
+  document.getElementById('statusText').textContent=`Análisis activo · ${S.company||'Empresa'} · Ejercicio ${f22?.año||'2025'}`;
+
+  document.getElementById('k-ventas').textContent=fmt(v);
+  document.getElementById('k-resultado').textContent=fmt(p>0?-p:ebitda);
+  document.getElementById('k-resultado-card').className='kpi '+(p>0?'red':'green');
+  document.getElementById('k-resultado-sub').textContent=p>0?'Pérdida del ejercicio':'Utilidad del ejercicio';
+  document.getElementById('k-margen').textContent=pct(mb,v);
+  document.getElementById('k-margen-card').className='kpi '+(mbPct>30?'green':mbPct>15?'amber':'red');
+  document.getElementById('k-endeud').textContent=end.toFixed(1)+'%';
+  document.getElementById('k-endeud-card').className='kpi '+(end<60?'green':end<80?'amber':'red');
+  document.getElementById('k-caja').textContent=fmt(caja);
+  document.getElementById('k-score').textContent=score;
+  document.getElementById('k-score-label').textContent=score>=70?'Saludable':score>=50?'Atención':'Crítico';
+  document.getElementById('ringNum').textContent=score;
+  const d=339;
+  document.getElementById('ringCircle').setAttribute('stroke-dashoffset',d-d*score/100);
+  document.getElementById('ringCircle').setAttribute('stroke',score>=70?'#2ECC8A':score>=50?'#F5A623':'#E5504A');
+  setSem('s-rent',mbPct>30?'verde':mbPct>10?'amarillo':'rojo',mbPct>30?'BUENO':mbPct>10?'MEDIO':'CRÍTICO');
+  setSem('s-liq',caja>tp*0.15?'verde':'amarillo',caja>tp*0.15?'BUENO':'MEDIO');
+  setSem('s-end',end<60?'verde':end<80?'amarillo':'rojo',end<60?'BUENO':end<80?'MEDIO':'CRÍTICO');
+  setSem('s-sii',f22?'verde':'amarillo',f22?'AL DÍA':'SIN DATOS');
+
+  if(p>0){document.getElementById('alertaRed').style.display='block';document.getElementById('alertaTitulo').textContent='⚠ La empresa registra pérdida en el ejercicio';document.getElementById('alertaCuerpo').textContent=`Pérdida de ${fmt(p)}. Los pasivos superan los activos en ${fmt(tp-ta)}. Requiere atención prioritaria.`;}
+
+  // Charts
+  dC('chartWaterfall');
+  CH['chartWaterfall']=new Chart(document.getElementById('chartWaterfall'),{type:'bar',data:{labels:['Ventas','Costo','Remuner.','Honorar.','Gastos','Arriendos','Comis.','Intereses','Resultado'],datasets:[{data:[v,-c,-r,-h,-g,-a,-co,-i,-(p||0)],backgroundColor:['#4A90D9','#E5504A','#E5504A','#E5504A','#E5504A','#E5504A','#E5504A','#E5504A',p>0?'#E5504A':'#2ECC8A'],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TICK,font:{size:9}},grid:{color:GRID}},y:{ticks:{color:TICK,font:{size:10},callback:v=>fmt(Math.abs(v))},grid:{color:GRID}}}}});
+
+  dC('chartCostos');
+  const cd=[c,r,h,g,a,co,i].filter(x=>x>0);
+  const cl=['Costo venta','Remuner.','Honorarios','Gtos grls','Arriendos','Comisiones','Intereses'].filter((_,idx)=>[c,r,h,g,a,co,i][idx]>0);
+  CH['chartCostos']=new Chart(document.getElementById('chartCostos'),{type:'doughnut',data:{labels:cl,datasets:[{data:cd,backgroundColor:['#4A90D9','#2ECC8A','#F5A623','#E5504A','#B8962E','#7B68EE','#20B2AA'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:TICK,font:{size:10},boxWidth:12}}}}});
+
+  dC('chartBalance');
+  CH['chartBalance']=new Chart(document.getElementById('chartBalance'),{type:'bar',data:{labels:['Activos','Pasivos','Patrimonio'],datasets:[{data:[ta,tp,pat],backgroundColor:['#4A90D9',tp>ta?'#E5504A':'#F5A623',pat>=0?'#2ECC8A':'#E5504A'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TICK},grid:{color:GRID}},y:{ticks:{color:TICK,callback:v=>fmt(v)},grid:{color:GRID}}}}});
+
+  // Tabla resultado
+  const rows=[{l:'Ventas / Ingresos del giro',v:v,b:true},{l:'(-) Costo de venta',v:-c},{l:'= Margen bruto',v:mb,b:true,tot:true},{l:'(-) Remuneraciones',v:-r},{l:'(-) Honorarios',v:-h},{l:'(-) Gastos generales',v:-g},{l:'(-) Arriendos',v:-a},{l:'(-) Comisiones',v:-co},{l:'(-) Intereses',v:-i},{l:'= Resultado del ejercicio',v:-(p||0),b:true,tot:true}].filter(row=>row.v!==0);
+  document.getElementById('tablaResultado').innerHTML=rows.map(row=>`<tr style="${row.b?'font-weight:600;background:var(--bg3)':''}"><td>${row.l}</td><td class="${row.v>=0?'pos':'neg'}">${fmtF(row.v)}</td><td class="num">${v?(Math.abs(row.v)/v*100).toFixed(1)+'%':'—'}</td><td style="text-align:center">${row.tot?(row.v>=0?'<span class="sem verde">POSITIVO</span>':'<span class="sem rojo">NEGATIVO</span>'):''}  </td></tr>`).join('');
+
+  // Balance tab
+  document.getElementById('b-activo').textContent=fmt(ta);
+  document.getElementById('b-pasivo').textContent=fmt(tp);
+  document.getElementById('b-pasivo-card').className='kpi '+(tp>ta?'red':'amber');
+  document.getElementById('b-patrimonio').textContent=fmt(pat);
+  document.getElementById('b-ratio').textContent=tp?(ta/tp).toFixed(2):'—';
+  const bi=[{l:'Caja y disponible',v:bc?.disponible||bt?.caja||0,t:'Activo'},{l:'Cuentas por cobrar',v:bt?.clientes||0,t:'Activo'},{l:'Cuentas por pagar',v:bc?.cuentas_pagar||0,t:'Pasivo'},{l:'Préstamo banco',v:bt?.deuda||0,t:'Pasivo'},{l:'Capital social',v:bc?.capital||0,t:'Patrimonio'},{l:'Pérdida ejercicio',v:bc?.perdida_ej||0,t:'Patrimonio'}].filter(r=>r.v>0);
+  document.getElementById('tablaBalance').innerHTML=bi.map(r=>`<tr><td>${r.l}</td><td class="num">${fmtF(r.v)}</td><td style="text-align:center"><span class="sem ${r.t==='Activo'?'verde':r.t==='Pasivo'?'rojo':'amarillo'}">${r.t.toUpperCase()}</span></td><td style="text-align:center">—</td></tr>`).join('');
+
+  // Tributario
+  if(f22){
+    document.getElementById('t-año').textContent=f22.año;
+    document.getElementById('t-ppm').textContent=fmt(f22.ppm);
+    document.getElementById('t-devol').textContent=fmt(f22.devolucion);
+    document.getElementById('t-resultado').textContent=f22.devolucion>0?'Devolución':'A pagar';
+    document.getElementById('ivaInsights').innerHTML=`<div class="insight ${f22.devolucion>0?'green':'amber'}"><div class="insight-title">F22 año tributario ${f22.año}</div><div class="insight-body">Ingresos: ${fmtF(f22.ingresos)} · Egresos: ${fmtF(f22.egresos)}<br>PPM: ${fmtF(f22.ppm)} · ${f22.devolucion>0?'Devolución: '+fmtF(f22.devolucion):'Sin devolución'}</div></div><div class="insight blue"><div class="insight-title">Régimen tributario</div><div class="insight-body">Empresa bajo Régimen Pro Pyme (14D). Contabilidad completa. Declara renta de primera categoría.</div></div>`;
+  }
+
+  // Insights
+  document.getElementById('insightContainer').innerHTML=[
+    {tp:mbPct>30?'green':mbPct>15?'amber':'red',ti:'Margen bruto',bo:`Margen bruto: ${mbPct.toFixed(1)}% (${fmt(mb)}). ${mbPct>30?'Excelente margen.':mbPct>15?'Margen moderado. Revisar precios y costo.':'Margen bajo — costo de venta consume más del 85% de ventas.'}`},
+    {tp:p>0?'red':'green',ti:'Resultado del ejercicio',bo:p>0?`Pérdida de ${fmt(p)}. Los gastos operacionales superan el margen bruto. Acción urgente: reducir gastos fijos y revisar pricing.`:'El ejercicio cerró con utilidad. Mantener control de costos y planificar crecimiento.'},
+    {tp:end<60?'green':end<80?'amber':'red',ti:'Nivel de endeudamiento',bo:`Endeudamiento: ${end.toFixed(1)}%. ${end<60?'Nivel saludable.':end<80?'Nivel moderado. Monitorear capacidad de pago.':'Nivel alto. Pasivos superan activos — evaluar refinanciamiento urgente.'}`},
+    {tp:'blue',ti:'Caja disponible',bo:`Caja al cierre: ${fmt(caja)}. ${caja>tp*0.15?'Liquidez suficiente para cubrir obligaciones de corto plazo.':'Liquidez ajustada respecto a los pasivos. Proyectar flujo de caja mensual.'}`}
+  ].map(i=>`<div class="insight ${i.tp}"><div class="insight-title">${i.ti}</div><div class="insight-body">${i.bo}</div></div>`).join('');
+
+  // Diagnóstico
+  document.getElementById('diagnosticoContent').innerHTML=`
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      <div class="kpi ${score>=70?'green':score>=50?'amber':'red'}"><div class="kpi-label">DIAGNÓSTICO GENERAL</div><div class="kpi-value">${score}/100</div><div class="kpi-sub">${score>=70?'Empresa saludable':score>=50?'Requiere atención':'Situación crítica'}</div></div>
+      <div class="kpi ${p>0?'red':'green'}"><div class="kpi-label">RENTABILIDAD</div><div class="kpi-value">${p>0?'PÉRDIDA':'UTILIDAD'}</div><div class="kpi-sub">${fmt(p>0?-p:ebitda)}</div></div>
+      <div class="kpi ${end>80?'red':end>60?'amber':'green'}"><div class="kpi-label">SOLVENCIA</div><div class="kpi-value">${end>80?'CRÍTICA':end>60?'MODERADA':'SANA'}</div><div class="kpi-sub">Endeudamiento ${end.toFixed(0)}%</div></div>
+    </div>
+    <div class="sec-label">Plan de acción Kingdom Legacy</div>
+    <div class="insight-grid">
+      <div class="insight red"><div class="insight-title">🚨 Prioridad 1 — Resultado del ejercicio</div><div class="insight-body">${p>0?`Pérdida de ${fmt(p)}. Acciones: (1) Identificar los 3 mayores gastos evitables, (2) Revisar política de precios, (3) Evaluar rentabilidad por línea de producto/servicio.`:'La empresa es rentable. Foco en mantener margen y proyectar crecimiento ordenado.'}</div></div>
+      <div class="insight amber"><div class="insight-title">⚠ Prioridad 2 — Estructura de deuda</div><div class="insight-body">${end>80?`Pasivos en ${end.toFixed(0)}% de activos. Evaluar: (1) Renegociación con proveedores, (2) Refinanciamiento bancario, (3) Aporte de capital de socios.`:`Endeudamiento en ${end.toFixed(0)}%, nivel manejable. Mantener disciplina financiera.`}</div></div>
+      <div class="insight blue"><div class="insight-title">📊 Prioridad 3 — Control de gestión</div><div class="insight-body">Implementar tablero de KPIs mensual: ventas vs presupuesto, margen bruto real, flujo de caja proyectado. Kingdom Legacy acompaña con reportes automáticos y revisión mensual.</div></div>
+      <div class="insight green"><div class="insight-title">🎯 Oportunidad identificada</div><div class="insight-body">${mbPct>30?`Margen bruto sólido (${mbPct.toFixed(0)}%). El problema está en los gastos operacionales. Optimizando gastos generales y comisiones la empresa puede recuperar la utilidad.`:`El margen bruto (${mbPct.toFixed(0)}%) es el punto crítico. Revisar costos de producción y estrategia de precios es la palanca más importante.`}</div></div>
+    </div>`;
+}
+
+function calcFogape() {
+  const cuota     = parseFloat(document.getElementById('inp-cuota').value) || 0;
+  const pagadas   = parseFloat(document.getElementById('inp-pagadas').value) || 0;
+  const totalCuotas = parseFloat(document.getElementById('inp-total-cuotas').value) || 0;
+  const fecha     = document.getElementById('inp-fecha').value || '—';
+  const restantes = totalCuotas - pagadas;
+  const deudaTotal = cuota * restantes;
+
+  S.fog = { cuota, pagadas, totalCuotas, restantes, deudaTotal, fecha };
+
+  document.getElementById('fog-total').textContent = fmt(deudaTotal);
+  document.getElementById('fog-cuota').textContent = fmt(cuota);
+  document.getElementById('fog-cuotas').textContent = restantes + ' cuotas';
+  document.getElementById('fog-fecha').textContent = fecha;
+  document.getElementById('fogape-grid').style.display = 'grid';
+
+  // Update diagnostico with FOGAPE data
+  const fogIns = document.createElement('div');
+  fogIns.className = 'insight red';
+  fogIns.innerHTML = `<div class="insight-title">🏦 Crédito FOGAPE — Banco de Chile</div>
+    <div class="insight-body">
+      Deuda restante: <strong>${fmt(deudaTotal)}</strong> en ${restantes} cuotas hasta ${fecha}.<br>
+      Carga mensual fija: <strong>${fmt(cuota)}</strong> — compromiso hasta ${fecha}.<br>
+      Esta obligación debe considerarse en el flujo de caja mensual proyectado.
+    </div>`;
+
+  const diag = document.getElementById('diagnosticoContent');
+  if(diag) diag.appendChild(fogIns);
+
+  alert('✓ Datos FOGAPE agregados al diagnóstico');
+}
+
+</script>
+</body>
+</html>
