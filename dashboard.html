@@ -3,954 +3,374 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kingdom Legacy — Diagnóstico Financiero</title>
+<title>Kingdom Legacy — Diagnóstico Financiero Integral</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  :root {
-    --navy: #1C2E4A;
-    --navy2: #243756;
-    --gold: #B8962E;
-    --gold-light: #D4AF5A;
-    --bg: #0F1923;
-    --bg2: #162030;
-    --bg3: #1E2D40;
-    --bg4: #243347;
-    --border: #2A3F58;
-    --text: #E8EFF7;
-    --text2: #8BA3BE;
-    --text3: #5A7A9A;
-    --green: #2ECC8A;
-    --green-bg: rgba(46,204,138,0.1);
-    --red: #E5504A;
-    --red-bg: rgba(229,80,74,0.1);
-    --amber: #F5A623;
-    --amber-bg: rgba(245,166,35,0.1);
-    --blue: #4A90D9;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
-
-  /* TOP BAR */
-  .topbar { background: var(--navy); border-bottom: 2px solid var(--gold); padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand-crown { font-size: 22px; color: var(--gold); }
-  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .06em; color: #fff; }
-  .brand-sep { width: 1px; height: 24px; background: var(--border); }
-  .brand-sub { font-size: 12px; color: var(--text2); letter-spacing: .04em; }
-  .topbar-right { display: flex; align-items: center; gap: 16px; }
-  .company-tag { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
-  .company-tag span { color: var(--text); font-weight: 600; }
-  .btn { padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; letter-spacing: .03em; }
-  .btn-gold { background: var(--gold); color: #fff; }
-  .btn-gold:hover { background: var(--gold-light); }
-  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
-
-  /* TABS */
-  .tabs { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; gap: 2px; }
-  .tab { padding: 13px 18px; font-size: 13px; font-weight: 500; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
-  .tab:hover { color: var(--text2); }
-  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-  /* LAYOUT */
-  .main { padding: 24px 28px; max-width: 1400px; }
-  .section-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
-
-  /* PERIOD SELECTOR */
-  .period-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
-  .period-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); transition: all .15s; }
-  .period-btn:hover { border-color: var(--gold); color: var(--gold); }
-  .period-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
-  .period-label { font-size: 12px; color: var(--text3); margin-right: 4px; }
-
-  /* KPI CARDS */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
-  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-  .kpi.green::before { background: var(--green); }
-  .kpi.red::before { background: var(--red); }
-  .kpi.amber::before { background: var(--amber); }
-  .kpi.blue::before { background: var(--blue); }
-  .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 10px; font-weight: 500; letter-spacing: .04em; }
-  .kpi-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 8px; }
-  .kpi-value.sm { font-size: 20px; }
-  .kpi-delta { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; }
-  .kpi-delta.up { color: var(--green); }
-  .kpi-delta.down { color: var(--red); }
-  .kpi-delta.flat { color: var(--text3); }
-  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
-
-  /* SEMAFORO */
-  .semaforo { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .semaforo.verde { background: var(--green-bg); color: var(--green); }
-  .semaforo.amarillo { background: var(--amber-bg); color: var(--amber); }
-  .semaforo.rojo { background: var(--red-bg); color: var(--red); }
-  .semaforo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-
-  /* CHARTS */
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
-  .chart-card.wide { grid-column: span 2; }
-  .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-  .chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 18px; }
-  .chart-wrap { position: relative; height: 220px; }
-  .chart-wrap.tall { height: 280px; }
-
-  /* TABLE */
-  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { text-align: left; padding: 8px 12px; color: var(--text3); font-weight: 600; letter-spacing: .04em; font-size: 11px; border-bottom: 1px solid var(--border); }
-  td { padding: 9px 12px; border-bottom: 1px solid rgba(42,63,88,.4); color: var(--text2); }
-  tr:hover td { background: var(--bg3); }
-  td.num { text-align: right; font-family: 'Courier New', monospace; color: var(--text); }
-  td.pos { color: var(--green); text-align: right; font-weight: 600; }
-  td.neg { color: var(--red); text-align: right; font-weight: 600; }
-
-  /* INSIGHT CARDS */
-  .insights { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-  .insight { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; border-left: 3px solid; }
-  .insight.green { border-left-color: var(--green); }
-  .insight.red { border-left-color: var(--red); }
-  .insight.amber { border-left-color: var(--amber); }
-  .insight.blue { border-left-color: var(--blue); }
-  .insight-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-  .insight-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
-
-  /* PROYECCION */
-  .proj-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-  .proj-card { background: var(--bg2); border: 1px dashed var(--border); border-radius: 10px; padding: 18px; }
-  .proj-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(184,150,46,.15); color: var(--gold); letter-spacing: .06em; margin-bottom: 10px; }
-  .proj-month { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
-  .proj-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(42,63,88,.3); }
-  .proj-row:last-child { border-bottom: none; }
-  .proj-key { font-size: 11px; color: var(--text3); }
-  .proj-val { font-size: 12px; font-weight: 600; color: var(--text); }
-
-  /* UPLOAD ZONE */
-  .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 24px; }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: rgba(184,150,46,.05); }
-  .upload-icon { font-size: 36px; margin-bottom: 12px; }
-  .upload-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-  .upload-sub { font-size: 12px; color: var(--text3); }
-  #fileInput { display: none; }
-
-  /* STATUS BAR */
-  .status-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg3); border-radius: 8px; margin-bottom: 20px; font-size: 12px; color: var(--text2); }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-  /* SCORE RING */
-  .score-ring { display: flex; flex-direction: column; align-items: center; }
-  .ring-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto 12px; }
-  .ring-svg { transform: rotate(-90deg); }
-  .ring-score { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
-  .ring-num { font-size: 28px; font-weight: 700; color: var(--text); }
-  .ring-label { font-size: 10px; color: var(--text3); }
-
-  .panel { display: none; }
-  .panel.active { display: block; }
-
-  @media (max-width: 768px) {
-    .chart-grid, .chart-grid-3, .insights, .proj-grid { grid-template-columns: 1fr; }
-    .chart-card.wide { grid-column: span 1; }
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  }
+:root{--navy:#1C2E4A;--gold:#B8962E;--gold-l:#D4AF5A;--bg:#0F1923;--bg2:#162030;--bg3:#1E2D40;--border:#2A3F58;--text:#E8EFF7;--text2:#8BA3BE;--text3:#5A7A9A;--green:#2ECC8A;--green-bg:rgba(46,204,138,.1);--red:#E5504A;--red-bg:rgba(229,80,74,.1);--amber:#F5A623;--amber-bg:rgba(245,166,35,.1);--blue:#4A90D9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.topbar{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-crown{font-size:22px;color:var(--gold)}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:.06em;color:#fff}
+.brand-sep{width:1px;height:24px;background:var(--border)}
+.brand-sub{font-size:12px;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.company-tag{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:var(--text2)}
+.company-tag span{color:var(--text);font-weight:600}
+.btn{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:2px}
+.tab{padding:13px 18px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.main{padding:24px 28px;max-width:1400px}
+.sec-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.green::before{background:var(--green)}.kpi.red::before{background:var(--red)}.kpi.amber::before{background:var(--amber)}.kpi.blue::before{background:var(--blue)}
+.kpi-label{font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:500;letter-spacing:.04em}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);line-height:1;margin-bottom:6px}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.sem{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.sem.verde{background:var(--green-bg);color:var(--green)}.sem.rojo{background:var(--red-bg);color:var(--red)}.sem.amarillo{background:var(--amber-bg);color:var(--amber)}
+.sem::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.chart-sub{font-size:11px;color:var(--text3);margin-bottom:16px}
+.chart-wrap{position:relative;height:220px}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+.insight{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;border-left:3px solid}
+.insight.green{border-left-color:var(--green)}.insight.red{border-left-color:var(--red)}.insight.amber{border-left-color:var(--amber)}.insight.blue{border-left-color:var(--blue)}
+.insight-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.insight-body{font-size:12px;color:var(--text2);line-height:1.6}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-weight:600;font-size:11px;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid rgba(42,63,88,.4);color:var(--text2)}
+td.num{text-align:right;font-family:'Courier New',monospace;color:var(--text)}
+td.pos{color:var(--green);text-align:right;font-weight:600}td.neg{color:var(--red);text-align:right;font-weight:600}
+tr:hover td{background:var(--bg3)}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(184,150,46,.05)}
+.upload-icon{font-size:32px;margin-bottom:10px}.upload-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}.upload-sub{font-size:12px;color:var(--text3)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.doc-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px}
+.doc-icon{font-size:24px;flex-shrink:0}.doc-name{font-size:12px;font-weight:600;color:var(--text)}.doc-status{font-size:11px;margin-top:3px}
+.status-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg3);border-radius:8px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--text3)}
+.alert{background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:14px 18px;margin-bottom:16px}
+.alert-title{font-weight:600;font-size:13px;color:var(--red);margin-bottom:4px}.alert-body{font-size:12px;color:var(--text2);line-height:1.5}
+.score-wrap{display:flex;flex-direction:column;align-items:center;padding:16px 0}
+.ring-wrap{position:relative;width:130px;height:130px;margin:0 auto 14px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-score{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ring-num{font-size:32px;font-weight:700;color:var(--text)}.ring-label{font-size:11px;color:var(--text3)}
+.panel{display:none}.panel.active{display:block}
+#fileInput{display:none}
+@media(max-width:768px){.chart-grid,.insight-grid,.doc-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-
-<!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">
-    <span class="brand-crown">♛</span>
+    <span class="brand-crown">&#9819;</span>
     <span class="brand-name">KINGDOM LEGACY</span>
     <div class="brand-sep"></div>
-    <span class="brand-sub">Diagnóstico Financiero</span>
+    <span class="brand-sub">Diagn&#243;stico Financiero Integral</span>
   </div>
   <div class="topbar-right">
-    <div class="company-tag">Empresa: <span id="companyName">Online Eventos HB SPA</span></div>
-    <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">+ Cargar archivos</button>
-    <button class="btn btn-gold" onclick="exportPDF()">Exportar PDF</button>
+    <div class="company-tag">Empresa: <span id="companyName">Sin empresa cargada</span></div>
+    <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">+ Cargar documentos</button>
+    <button class="btn btn-gold" onclick="window.print()">Exportar PDF</button>
   </div>
 </div>
-
-<!-- TABS -->
 <div class="tabs">
   <div class="tab active" onclick="showTab('resumen',this)">Resumen ejecutivo</div>
-  <div class="tab" onclick="showTab('ingresos',this)">Ingresos y ventas</div>
-  <div class="tab" onclick="showTab('iva',this)">IVA y tributario</div>
-  <div class="tab" onclick="showTab('proyeccion',this)">Proyección</div>
-  <div class="tab" onclick="showTab('carga',this)">Cargar datos</div>
+  <div class="tab" onclick="showTab('resultado',this)">Estado de resultado</div>
+  <div class="tab" onclick="showTab('balance',this)">Balance</div>
+  <div class="tab" onclick="showTab('tributario',this)">Tributario</div>
+  <div class="tab" onclick="showTab('diagnostico',this)">Diagn&#243;stico KL</div>
+  <div class="tab" onclick="showTab('carga',this)">Cargar documentos</div>
 </div>
-
 <div class="main">
 
-<!-- PERIOD SELECTOR -->
-<div class="period-bar">
-  <span class="period-label">Período:</span>
-  <div class="period-btn active" onclick="setPeriod(12,this)">Últimos 12M</div>
-  <div class="period-btn" onclick="setPeriod(24,this)">Últimos 24M</div>
-  <div class="period-btn" onclick="setPeriod(36,this)">Todo (36M)</div>
-  <div class="period-btn" onclick="setPeriod(6,this)">Últimos 6M</div>
-  <div style="margin-left:auto;font-size:12px;color:var(--text3)" id="periodRange"></div>
-</div>
-
-<!-- ============================================================ -->
-<!-- TAB: RESUMEN -->
-<!-- ============================================================ -->
+<!-- RESUMEN -->
 <div id="tab-resumen" class="panel active">
-
-  <div class="status-bar">
-    <div class="status-dot"></div>
-    <span>Análisis activo · <span id="totalPeriods">36</span> períodos cargados · Datos al <span id="lastPeriod">Marzo 2026</span></span>
-  </div>
-
-  <!-- KPIs -->
-  <div class="section-label">Indicadores clave del período</div>
+  <div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Sin documentos cargados &#8212; ve a "Cargar documentos" para comenzar</span></div>
+  <div id="alertaRed" class="alert" style="display:none"><div class="alert-title" id="alertaTitulo"></div><div class="alert-body" id="alertaCuerpo"></div></div>
+  <div class="sec-label">Indicadores clave</div>
   <div class="kpi-grid">
-    <div class="kpi blue">
-      <div class="kpi-label">BASE IMPONIBLE ACUM.</div>
-      <div class="kpi-value sm" id="kpi-base">$0</div>
-      <div class="kpi-delta up" id="kpi-base-delta">↑ 0%</div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">PROMEDIO MENSUAL</div>
-      <div class="kpi-value sm" id="kpi-prom">$0</div>
-      <div class="kpi-sub" id="kpi-prom-sub">vs período anterior</div>
-    </div>
-    <div class="kpi amber">
-      <div class="kpi-label">IVA PAGADO ACUM.</div>
-      <div class="kpi-value sm" id="kpi-iva">$0</div>
-      <div class="kpi-delta" id="kpi-iva-delta">—</div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">PPM ACUMULADO</div>
-      <div class="kpi-value sm" id="kpi-ppm">$0</div>
-      <div class="kpi-sub">Provisión mensual renta</div>
-    </div>
-    <div class="kpi" id="kpi-trend-card">
-      <div class="kpi-label">TENDENCIA INGRESOS</div>
-      <div class="kpi-value sm" id="kpi-trend">+0%</div>
-      <div class="kpi-sub">Crecimiento período</div>
-    </div>
-    <div class="kpi" id="kpi-health-card">
-      <div class="kpi-label">SALUD FISCAL</div>
-      <div id="kpi-health" style="margin-top:6px">—</div>
-    </div>
+    <div class="kpi blue"><div class="kpi-label">VENTAS ANUALES</div><div class="kpi-value" id="k-ventas">&#8212;</div><div class="kpi-sub">Ingresos del giro</div></div>
+    <div class="kpi" id="k-resultado-card"><div class="kpi-label">RESULTADO EJERCICIO</div><div class="kpi-value" id="k-resultado">&#8212;</div><div class="kpi-sub" id="k-resultado-sub">Utilidad o p&#233;rdida</div></div>
+    <div class="kpi" id="k-margen-card"><div class="kpi-label">MARGEN BRUTO</div><div class="kpi-value" id="k-margen">&#8212;</div><div class="kpi-sub">Ventas - Costo de venta</div></div>
+    <div class="kpi" id="k-endeud-card"><div class="kpi-label">ENDEUDAMIENTO</div><div class="kpi-value" id="k-endeud">&#8212;</div><div class="kpi-sub">Pasivo / Activo</div></div>
+    <div class="kpi green"><div class="kpi-label">CAJA DISPONIBLE</div><div class="kpi-value" id="k-caja">&#8212;</div><div class="kpi-sub">Efectivo al cierre</div></div>
+    <div class="kpi amber"><div class="kpi-label">SCORE KL</div><div class="kpi-value" id="k-score">&#8212;</div><div class="kpi-sub" id="k-score-label">Pendiente</div></div>
   </div>
-
-  <!-- CHARTS ROW 1 -->
-  <div class="chart-grid" style="grid-template-columns: 2fr 1fr; margin-bottom:16px;">
-    <div class="chart-card wide" style="grid-column:auto">
-      <div class="chart-title">Evolución de base imponible mensual</div>
-      <div class="chart-sub">Ingresos netos declarados al SII — Formulario 29</div>
-      <div class="chart-wrap tall"><canvas id="chartBase"></canvas></div>
-    </div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Ingresos, costos y resultado</div><div class="chart-sub">Estructura financiera del ejercicio</div><div class="chart-wrap"><canvas id="chartWaterfall"></canvas></div></div>
     <div class="chart-card">
-      <div class="chart-title">Score de salud financiera</div>
-      <div class="chart-sub">Evaluación multidimensional</div>
-      <div class="score-ring" style="margin-top:16px;">
+      <div class="score-wrap">
         <div class="ring-wrap">
-          <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#1E2D40" stroke-width="12"/>
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#B8962E" stroke-width="12"
-              stroke-dasharray="314" stroke-dashoffset="78" stroke-linecap="round" id="ringCircle"/>
+          <svg class="ring-svg" width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="54" fill="none" stroke="#1E2D40" stroke-width="13"/>
+            <circle cx="65" cy="65" r="54" fill="none" stroke="#B8962E" stroke-width="13" stroke-dasharray="339" stroke-dashoffset="339" stroke-linecap="round" id="ringCircle"/>
           </svg>
-          <div class="ring-score"><div class="ring-num" id="ringScore">75</div><div class="ring-label">/ 100</div></div>
+          <div class="ring-score"><div class="ring-num" id="ringNum">&#8212;</div><div class="ring-label">/ 100</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:8px;">
-          <div style="text-align:center;">
-            <div style="font-size:10px;color:var(--text3)">Crecimiento</div>
-            <div class="semaforo verde" style="margin:4px auto;display:inline-flex;" id="score-crec">BUENO</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:10px;color:var(--text3)">IVA</div>
-            <div class="semaforo amarillo" style="margin:4px auto;display:inline-flex;" id="score-iva">MEDIO</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:10px;color:var(--text3)">Estabilidad</div>
-            <div class="semaforo amarillo" style="margin:4px auto;display:inline-flex;" id="score-est">MEDIO</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:10px;color:var(--text3)">PPM</div>
-            <div class="semaforo verde" style="margin:4px auto;display:inline-flex;" id="score-ppm">BUENO</div>
-          </div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Score Kingdom Legacy</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%">
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Rentabilidad</div><div class="sem" id="s-rent">&#8212;</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Liquidez</div><div class="sem" id="s-liq">&#8212;</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Endeudamiento</div><div class="sem" id="s-end">&#8212;</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Cumplimiento SII</div><div class="sem" id="s-sii">&#8212;</div></div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- CHARTS ROW 2 -->
-  <div class="chart-grid">
-    <div class="chart-card">
-      <div class="chart-title">IVA pagado vs PPM mensual</div>
-      <div class="chart-sub">Carga tributaria por período</div>
-      <div class="chart-wrap"><canvas id="chartIvaPpm"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Variación mensual de ingresos</div>
-      <div class="chart-sub">% de cambio respecto al mes anterior</div>
-      <div class="chart-wrap"><canvas id="chartVariacion"></canvas></div>
-    </div>
-  </div>
-
-  <!-- INSIGHTS -->
-  <div class="section-label">Observaciones del período</div>
-  <div class="insights" id="insightContainer"></div>
-
-</div>
-
-<!-- ============================================================ -->
-<!-- TAB: INGRESOS -->
-<!-- ============================================================ -->
-<div id="tab-ingresos" class="panel">
-  <div class="section-label">Análisis detallado de ingresos</div>
-  <div class="chart-card" style="margin-bottom:16px;">
-    <div class="chart-title">Base imponible — vista completa 36 meses</div>
-    <div class="chart-sub">Con línea de tendencia y promedio móvil 3 meses</div>
-    <div class="chart-wrap" style="height:300px;"><canvas id="chartBaseFull"></canvas></div>
-  </div>
-  <div class="chart-grid">
-    <div class="chart-card">
-      <div class="chart-title">Distribución por trimestre</div>
-      <div class="chart-sub">Base imponible acumulada por trimestre</div>
-      <div class="chart-wrap"><canvas id="chartTrimestre"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Estacionalidad mensual</div>
-      <div class="chart-sub">Promedio por mes del año (todos los años)</div>
-      <div class="chart-wrap"><canvas id="chartEstacional"></canvas></div>
-    </div>
-  </div>
-  <div class="section-label">Tabla de períodos</div>
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Período</th>
-          <th style="text-align:right">Base Imponible</th>
-          <th style="text-align:right">Débitos IVA</th>
-          <th style="text-align:right">Créditos IVA</th>
-          <th style="text-align:right">IVA a pagar</th>
-          <th style="text-align:right">PPM</th>
-          <th style="text-align:right">Var. Base %</th>
-          <th style="text-align:center">Estado</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+  <div class="sec-label">Observaciones</div>
+  <div class="insight-grid" id="insightContainer">
+    <div class="insight blue" style="grid-column:span 2"><div class="insight-title">Sin datos cargados</div><div class="insight-body">Carga los documentos del cliente en la pesta&#241;a "Cargar documentos" para generar el diagn&#243;stico.</div></div>
   </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- TAB: IVA -->
-<!-- ============================================================ -->
-<div id="tab-iva" class="panel">
-  <div class="section-label">Comportamiento tributario</div>
+<!-- ESTADO RESULTADO -->
+<div id="tab-resultado" class="panel">
+  <div class="sec-label">Estado de resultado</div>
+  <div class="table-card"><table><thead><tr><th>Concepto</th><th style="text-align:right">Monto ($)</th><th style="text-align:right">% sobre ventas</th><th style="text-align:center">Evaluaci&#243;n</th></tr></thead><tbody id="tablaResultado"></tbody></table></div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Composici&#243;n de costos</div><div class="chart-sub">Distribuci&#243;n sobre ventas</div><div class="chart-wrap"><canvas id="chartCostos"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Cascada de resultado</div><div class="chart-sub">De ventas a resultado neto</div><div class="chart-wrap"><canvas id="chartCascada"></canvas></div></div>
+  </div>
+</div>
+
+<!-- BALANCE -->
+<div id="tab-balance" class="panel">
+  <div class="sec-label">Balance general</div>
   <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="kpi amber">
-      <div class="kpi-label">IVA PROMEDIO MENSUAL</div>
-      <div class="kpi-value sm" id="kpi-iva-prom">$0</div>
-    </div>
-    <div class="kpi blue">
-      <div class="kpi-label">MES MAYOR CARGA IVA</div>
-      <div class="kpi-value sm" id="kpi-iva-max-mes">—</div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">MES MENOR CARGA IVA</div>
-      <div class="kpi-value sm" id="kpi-iva-min-mes">—</div>
-    </div>
-    <div class="kpi" id="kpi-iva-ratio-card">
-      <div class="kpi-label">RATIO IVA / INGRESOS</div>
-      <div class="kpi-value sm" id="kpi-iva-ratio">0%</div>
-      <div class="kpi-sub">Promedio del período</div>
-    </div>
+    <div class="kpi blue"><div class="kpi-label">TOTAL ACTIVOS</div><div class="kpi-value" id="b-activo">&#8212;</div></div>
+    <div class="kpi" id="b-pasivo-card"><div class="kpi-label">TOTAL PASIVOS</div><div class="kpi-value" id="b-pasivo">&#8212;</div></div>
+    <div class="kpi green"><div class="kpi-label">PATRIMONIO</div><div class="kpi-value" id="b-patrimonio">&#8212;</div></div>
+    <div class="kpi" id="b-ratio-card"><div class="kpi-label">RAZ&#211;N CORRIENTE</div><div class="kpi-value" id="b-ratio">&#8212;</div><div class="kpi-sub">Activo / Pasivo</div></div>
   </div>
-  <div class="chart-card" style="margin-bottom:16px;">
-    <div class="chart-title">IVA determinado vs créditos fiscales</div>
-    <div class="chart-sub">Comparativo mensual — débitos y créditos IVA</div>
-    <div class="chart-wrap tall"><canvas id="chartIvaDetalle"></canvas></div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Activos vs Pasivos vs Patrimonio</div><div class="chart-sub">Estructura del balance</div><div class="chart-wrap"><canvas id="chartBalance"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Composici&#243;n del pasivo</div><div class="chart-sub">Distribuci&#243;n de obligaciones</div><div class="chart-wrap"><canvas id="chartPasivo"></canvas></div></div>
   </div>
-  <div class="insights" id="ivaInsights"></div>
+  <div class="table-card"><table><thead><tr><th>Cuenta</th><th style="text-align:right">Monto ($)</th><th style="text-align:center">Tipo</th><th style="text-align:center">Estado</th></tr></thead><tbody id="tablaBalance"></tbody></table></div>
 </div>
 
-<!-- ============================================================ -->
-<!-- TAB: PROYECCIÓN -->
-<!-- ============================================================ -->
-<div id="tab-proyeccion" class="panel">
-  <div class="section-label">Proyección de períodos futuros</div>
-  <div class="status-bar">
-    <div class="status-dot" style="background:var(--amber)"></div>
-    <span>Proyección basada en tendencia histórica y estacionalidad observada · Actualizar con datos reales al cerrar cada período</span>
+<!-- TRIBUTARIO -->
+<div id="tab-tributario" class="panel">
+  <div class="sec-label">Situaci&#243;n tributaria</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi blue"><div class="kpi-label">A&#209;O TRIBUTARIO</div><div class="kpi-value" id="t-año">&#8212;</div></div>
+    <div class="kpi green"><div class="kpi-label">PPM ACUMULADO</div><div class="kpi-value" id="t-ppm">&#8212;</div></div>
+    <div class="kpi" id="t-devol-card"><div class="kpi-label">DEVOLUCI&#211;N SOLICITADA</div><div class="kpi-value" id="t-devol">&#8212;</div></div>
+    <div class="kpi" id="t-resultado-card"><div class="kpi-label">RESULTADO RENTA</div><div class="kpi-value" id="t-resultado">&#8212;</div></div>
   </div>
-  <div class="chart-card" style="margin-bottom:20px;">
-    <div class="chart-title">Histórico + proyección 6 meses</div>
-    <div class="chart-sub">Zona grisada = proyección estimada con banda de confianza ±15%</div>
-    <div class="chart-wrap tall"><canvas id="chartProyeccion"></canvas></div>
-  </div>
-  <div class="section-label">Detalle de proyección mensual</div>
-  <div class="proj-grid" id="projCards"></div>
-  <div class="insights" id="projInsights"></div>
+  <div class="insight-grid" id="ivaInsights"></div>
 </div>
 
-<!-- ============================================================ -->
-<!-- TAB: CARGA DE DATOS -->
-<!-- ============================================================ -->
+<!-- DIAGNOSTICO -->
+<div id="tab-diagnostico" class="panel">
+  <div class="sec-label">Diagn&#243;stico Kingdom Legacy</div>
+  <div id="diagnosticoContent"><div class="insight blue"><div class="insight-title">Sin datos</div><div class="insight-body">Carga los documentos del cliente para generar el diagn&#243;stico completo.</div></div></div>
+</div>
+
+<!-- CARGA -->
 <div id="tab-carga" class="panel">
-  <div class="section-label">Cargar nuevos datos</div>
-  <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.pdf,.csv" onchange="handleFiles(this.files)">
-  <div class="upload-zone" onclick="document.getElementById('fileInput').click()"
-       ondragover="event.preventDefault();this.classList.add('drag')"
-       ondragleave="this.classList.remove('drag')"
-       ondrop="event.preventDefault();this.classList.remove('drag');handleFiles(event.dataTransfer.files)">
-    <div class="upload-icon">📂</div>
-    <div class="upload-title">Arrastra o haz clic para cargar archivos</div>
-    <div class="upload-sub">Formatos soportados: Excel (.xlsx) con libro de ventas · PDF Carpeta Tributaria SII · CSV</div>
+  <div class="sec-label">Cargar documentos del cliente</div>
+  <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls" onchange="handleFiles(this.files)">
+  <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleFiles(event.dataTransfer.files)" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">&#128194;</div>
+    <div class="upload-title">Arrastra o haz clic para cargar documentos</div>
+    <div class="upload-sub">Balance tributario &#183; Balance clasificado &#183; F22 &#183; Certificado de renta &#183; Carpeta tributaria SII</div>
   </div>
-  <div id="uploadLog" style="font-size:12px;color:var(--text2);line-height:1.8;"></div>
-
-  <div class="section-label" style="margin-top:24px;">Archivos cargados</div>
-  <div class="table-card">
-    <table>
-      <thead><tr><th>Archivo</th><th>Tipo</th><th>Períodos detectados</th><th>Estado</th></tr></thead>
-      <tbody id="fileTable">
-        <tr>
-          <td>Carpeta_tributaria_Hugo.pdf</td>
-          <td>Carpeta Tributaria SII</td>
-          <td>Abr 2023 – Feb 2026 (36 períodos)</td>
-          <td><span class="semaforo verde">PROCESADO</span></td>
-        </tr>
-        <tr>
-          <td>MES_MARZO_2026_redital_revisado.xlsx</td>
-          <td>Libro de ventas Excel</td>
-          <td>Marzo 2026 (1 período)</td>
-          <td><span class="semaforo verde">PROCESADO</span></td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="sec-label">Documentos</div>
+  <div class="doc-grid" id="docGrid">
+    <div class="doc-card" id="doc-bt" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Balance tributario</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-bc" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Balance clasificado</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-f22" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">F22 Renta anual</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-cert" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Certificado de renta</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-fog" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Deuda FOGAPE</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
+    <div class="doc-card" id="doc-f29" style="opacity:.4"><span class="doc-icon">&#128196;</span><div><div class="doc-name">Carpeta tributaria SII</div><div class="doc-status" style="color:var(--text3)">Pendiente</div></div></div>
   </div>
+  <div id="uploadLog" style="font-size:12px;color:var(--text2);line-height:2;margin-top:12px"></div>
 </div>
 
-</div><!-- /main -->
-
+</div>
 <script>
-// ── DATA ──────────────────────────────────────────────────────
-const RAW = [
-  {p:"2023-04",b:5679435,d:1079093,c:1079093,iva:54543,ppm:14378},
-  {p:"2023-05",b:1769000,d:335925,c:402789,iva:125980,ppm:4416},
-  {p:"2023-06",b:5169469,d:1137999,c:624884,iva:578644,ppm:14974},
-  {p:"2023-07",b:4061653,d:771738,c:556322,iva:269166,ppm:5077},
-  {p:"2023-08",b:6582290,d:1884934,c:1035703,iva:112590,ppm:9652},
-  {p:"2023-09",b:6638020,d:1242258,c:1305165,iva:34892,ppm:8173},
-  {p:"2023-10",b:7960820,d:1399010,c:715183,iva:294058,ppm:10224},
-  {p:"2023-11",b:8377670,d:1883256,c:786424,iva:919252,ppm:10465},
-  {p:"2023-12",b:9667578,d:1836777,c:1647994,iva:1647994,ppm:12084},
-  {p:"2024-01",b:5128773,d:974461,c:331799,iva:701878,ppm:6411},
-  {p:"2024-02",b:14083650,d:252020,c:13314,iva:176382,ppm:1145},
-  {p:"2024-03",b:7270118,d:1381330,c:424038,iva:68751,ppm:9033},
-  {p:"2024-04",b:6549754,d:1215718,c:2767512,iva:84960,ppm:6187},
-  {p:"2024-05",b:14100000,d:2978239,c:1510468,iva:733775,ppm:17628},
-  {p:"2024-06",b:8814062,d:1379694,c:935589,iva:957731,ppm:10393},
-  {p:"2024-07",b:8236253,d:1564888,c:283097,iva:1783098,ppm:10235},
-  {p:"2024-08",b:9540088,d:2046046,c:1494712,iva:1623119,ppm:11335},
-  {p:"2024-09",b:5610715,d:1101598,c:1047030,iva:883057,ppm:6888},
-  {p:"2024-10",b:13020099,d:3076650,c:2750703,iva:136994,ppm:16317},
-  {p:"2024-11",b:22599250,d:4538318,c:2316448,iva:2387329,ppm:28249},
-  {p:"2024-12",b:20287000,d:4087147,c:3182437,iva:211080,ppm:35352},
-  {p:"2025-01",b:11389063,d:2163260,c:2694225,iva:192978,ppm:25484},
-  {p:"2025-02",b:10071005,d:2182363,c:1813503,iva:899008,ppm:25175},
-  {p:"2025-03",b:10066227,d:2595354,c:547870,iva:1500536,ppm:35186},
-  {p:"2025-04",b:15236600,d:3371349,c:352140,iva:2897028,ppm:21476},
-  {p:"2025-05",b:21212650,d:1484392,c:177835,iva:1259257,ppm:27214},
-  {p:"2025-06",b:6490430,d:1233563,c:312949,iva:1009352,ppm:19824},
-  {p:"2025-07",b:9262802,d:1759953,c:381003,iva:1487677,ppm:23137},
-  {p:"2025-08",b:6790303,d:1489945,c:192785,iva:1214155,ppm:18391},
-  {p:"2025-09",b:12668040,d:3395014,c:191158,iva:201328,ppm:36094},
-  {p:"2025-10",b:6345671,d:1335887,c:237027,iva:1071882,ppm:7933},
-  {p:"2025-11",b:14270284,d:2988755,c:210088,iva:328478,ppm:17335},
-  {p:"2025-12",b:25090300,d:5989332,c:1438353,iva:306280,ppm:31613},
-  {p:"2026-01",b:11586063,d:2163260,c:240516,iva:1143399,ppm:8947},
-  {p:"2026-02",b:8562000,d:1254882,c:1054882,iva:1143399,ppm:20350},
-  {p:"2026-03",b:19603268,d:3094103,c:3094103,iva:3029138,ppm:20335},
-];
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const S={company:null,bt:null,bc:null,f22:null,cert:null,fog:null};
+let CH={};
+const GRID='rgba(42,63,88,0.6)',TICK='#5A7A9A';
 
-const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const MONTHS_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function fmt(n){if(!n||isNaN(n))return'—';const a=Math.abs(n);let s=a>=1e9?(a/1e9).toFixed(1)+'B':a>=1e6?(a/1e6).toFixed(1)+'M':a>=1e3?(a/1e3).toFixed(0)+'K':Math.round(a).toLocaleString('es-CL');return(n<0?'-':'')+'$'+s;}
+function fmtF(n){if(!n||isNaN(n))return'—';return(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString('es-CL');}
+function pct(n,t){if(!t)return'—';return(n/t*100).toFixed(1)+'%';}
+function cN(s){if(!s)return 0;try{return parseInt(String(s).replace(/[.,\s]/g,''))||0;}catch{return 0;}}
+function fV(text,patterns){for(const p of patterns){const m=text.match(new RegExp(p,'i'));if(m)return cN(m[1]);}return 0;}
+function dC(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+function showTab(id,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');el.classList.add('active');}
+function setSem(id,tipo,label){const el=document.getElementById(id);el.className='sem '+tipo;el.textContent=label;}
+function markDoc(id,ok){const c=document.getElementById(id);if(!c)return;c.style.opacity='1';const s=c.querySelector('.doc-status');s.textContent=ok?'Procesado ✓':'Error';s.style.color=ok?'var(--green)':'var(--red)';}
 
-let currentPeriod = 12;
-let charts = {};
-
-function fmt(n) {
-  if(n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
-  if(n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
-  if(n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
-  return '$' + Math.round(n).toLocaleString('es-CL');
-}
-function fmtFull(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
-function pLabel(p) {
-  const [y,m] = p.split('-');
-  return MONTHS_ES[parseInt(m)-1] + ' ' + y.slice(2);
-}
-function pLabelFull(p) {
-  const [y,m] = p.split('-');
-  return MONTHS_FULL[parseInt(m)-1] + ' ' + y;
-}
-function pct(n) { return (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; }
-
-function getData() {
-  return RAW.slice(-currentPeriod);
-}
-function getPrev() {
-  const total = RAW.length;
-  const start = Math.max(0, total - currentPeriod*2);
-  const end = total - currentPeriod;
-  return RAW.slice(start, end);
+async function extractPDFText(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const c=await page.getTextContent();text+=c.items.map(it=>it.str).join(' ')+'\n';}
+  return text;
 }
 
-function updateAll() {
-  const data = getData();
-  const prev = getPrev();
-  const labels = data.map(d => pLabel(d.p));
+function parseBT(t){return{ventas:fV(t,['5101-01 VENTAS ([\\d.,]+)']),costo:fV(t,['4101-01 COSTO DE VENTA ([\\d.,]+)']),remuner:fV(t,['4201-01 REMUNERACIONES[\\w\\s]+?([\\d.,]+)']),honor:fV(t,['4201-02 HONORARIOS[\\w\\s]+?([\\d.,]+)']),gastos:fV(t,['4201-08 GASTOS GENERALES ([\\d.,]+)']),arriendos:fV(t,['4201-30 ARRIENDOS[\\w\\s]+?([\\d.,]+)']),comisiones:fV(t,['4205-03 COMISIONES ([\\d.,]+)']),intereses:fV(t,['4401-01 INTERESES[\\w\\s]+?([\\d.,]+)']),perdida:fV(t,['Perdida Ejercicio ([\\d.,]+)','PERDIDA EJERCICIO ([\\d.,]+)']),caja:fV(t,['1101-01 CUENTA CAJA ([\\d.,]+)']),clientes:fV(t,['1104-01 CLIENTES ([\\d.,]+)']),deuda:fV(t,['2105-08 PRESTAMO[\\w\\s]+?([\\d.,]+)'])};}
+function parseF22(t){return{rut:t.match(/(\d{7,8}-[\dkK])/)?.[1]||'',empresa:t.match(/01 ([A-ZÁÉÍÓÚÑ\s]+?) (?:Calle|06)/)?.[1]?.trim()||'',año:t.match(/AÑO TRIBUTARIO (\d{4})/)?.[1]||'2026',ingresos:fV(t,['1410[\\w\\s]+?([\\d.,]+)','Total de ingresos anuales ([\\d.,]+)']),egresos:fV(t,['1430[\\w\\s]+?([\\d.,]+)','Total de egresos anuales ([\\d.,]+)']),ventas:fV(t,['1400[\\w\\s]+?([\\d.,]+)','Ingresos del giro percibidos ([\\d.,]+)']),ppm:fV(t,['36 PPM[\\w\\s]+?([\\d.,]+)','PPM y remanente[\\w\\s]+?([\\d.,]+)']),devolucion:fV(t,['87 ([\\d.,]+)','MONTO DEVOLUCIÓN ([\\d.,]+)']),resultado:fV(t,['305 RESULTADO[\\w\\s]+?([\\d.,]+)'])};}
+function parseBC(t){return{activos:fV(t,['TOTAL ACTIVOS ([\\d.,]+)']),pasivos:fV(t,['TOTAL PASIVOS ([\\d.,]+)']),disponible:fV(t,['1101 DISPONIBLE ([\\d.,]+)']),cuentas_pagar:fV(t,['2105 CUENTAS POR PAGAR ([\\d.,]+)']),capital:fV(t,['2301 CAPITAL ([\\d.,]+)']),perdida_ej:fV(t,['PERDIDA EJERCICIO ([\\d.,]+)'])};}
 
-  const sumBase = data.reduce((s,d)=>s+d.b,0);
-  const sumIva  = data.reduce((s,d)=>s+d.iva,0);
-  const sumPpm  = data.reduce((s,d)=>s+d.ppm,0);
-  const prom    = sumBase / data.length;
-
-  const prevBase = prev.length ? prev.reduce((s,d)=>s+d.b,0) : sumBase;
-  const prevProm = prev.length ? prevBase/prev.length : prom;
-
-  const growthPct = ((prom - prevProm)/prevProm*100);
-  const baseDeltaPct = ((sumBase - prevBase)/prevBase*100);
-
-  // KPIs
-  document.getElementById('kpi-base').textContent = fmt(sumBase);
-  document.getElementById('kpi-base-delta').textContent = (baseDeltaPct>=0?'↑ ':'↓ ') + Math.abs(baseDeltaPct).toFixed(1) + '% vs período anterior';
-  document.getElementById('kpi-base-delta').className = 'kpi-delta ' + (baseDeltaPct>=0?'up':'down');
-
-  document.getElementById('kpi-prom').textContent = fmt(prom);
-  document.getElementById('kpi-prom-sub').textContent = 'Prom anterior: ' + fmt(prevProm);
-
-  document.getElementById('kpi-iva').textContent = fmt(sumIva);
-  const ivaDelta = prev.length ? ((sumIva - prev.reduce((s,d)=>s+d.iva,0))/prev.reduce((s,d)=>s+d.iva,1)*100) : 0;
-  document.getElementById('kpi-iva-delta').textContent = (ivaDelta>=0?'↑ ':'↓ ') + Math.abs(ivaDelta).toFixed(1) + '% vs anterior';
-  document.getElementById('kpi-iva-delta').className = 'kpi-delta ' + (ivaDelta<=0?'up':'down');
-
-  document.getElementById('kpi-ppm').textContent = fmt(sumPpm);
-  document.getElementById('kpi-trend').textContent = pct(growthPct);
-  document.getElementById('kpi-trend').style.color = growthPct >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('kpi-trend-card').querySelector('.kpi-sub').textContent = 'Promedio mensual';
-
-  // Score
-  const score = calcScore(data);
-  document.getElementById('ringScore').textContent = score;
-  const dash = 314;
-  document.getElementById('ringCircle').setAttribute('stroke-dashoffset', dash - (dash * score/100));
-  document.getElementById('ringCircle').setAttribute('stroke', score>=70?'#2ECC8A':score>=50?'#F5A623':'#E5504A');
-
-  // Period range
-  document.getElementById('periodRange').textContent = pLabelFull(data[0].p) + ' → ' + pLabelFull(data[data.length-1].p);
-
-  // Health status
-  const hEl = document.getElementById('kpi-health');
-  if(score >= 70) hEl.innerHTML = '<span class="semaforo verde" style="font-size:13px">SALUDABLE</span>';
-  else if(score >= 50) hEl.innerHTML = '<span class="semaforo amarillo" style="font-size:13px">ATENCIÓN</span>';
-  else hEl.innerHTML = '<span class="semaforo rojo" style="font-size:13px">CRÍTICO</span>';
-
-  updateCharts(data, labels);
-  updateInsights(data);
-  updateTable(data);
-  updateIvaTab(data);
-  updateProjection();
+function detectType(text,fname){
+  const t=text.toUpperCase();
+  if(t.includes('BALANCE GENERAL')&&t.includes('SUMAS SALDOS'))return'bt';
+  if(t.includes('BALANCE CLASIFICADO'))return'bc';
+  if(t.includes('FORM. 22')||t.includes('IMPUESTOS ANUALES A LA RENTA'))return'f22';
+  if(t.includes('CERTIFICADO DECLARACIÓN DE RENTA'))return'cert';
+  if(t.includes('FOGAPE'))return'fog';
+  if(t.includes('FORMULARIO 29')||t.includes('DECLARACION MENSUAL'))return'f29';
+  return'unknown';
 }
 
-function calcScore(data) {
-  let score = 0;
-  // Growth (30 pts)
-  const first3 = data.slice(0,3).reduce((s,d)=>s+d.b,0)/3;
-  const last3  = data.slice(-3).reduce((s,d)=>s+d.b,0)/3;
-  const growth = (last3-first3)/first3*100;
-  score += Math.min(30, Math.max(0, 15 + growth * 0.3));
-  // IVA regularity (25 pts)
-  const ivaRatios = data.map(d => d.iva/d.b);
-  const ivaAvg = ivaRatios.reduce((s,v)=>s+v,0)/ivaRatios.length;
-  const ivaStd = Math.sqrt(ivaRatios.map(v=>(v-ivaAvg)**2).reduce((s,v)=>s+v,0)/ivaRatios.length);
-  score += Math.max(0, 25 - ivaStd*100);
-  // Stability (25 pts)
-  const bases = data.map(d=>d.b);
-  const avg = bases.reduce((s,v)=>s+v,0)/bases.length;
-  const cv = Math.sqrt(bases.map(v=>(v-avg)**2).reduce((s,v)=>s+v,0)/bases.length)/avg;
-  score += Math.max(0, 25 - cv*25);
-  // PPM (20 pts)
-  const ppmOk = data.filter(d=>d.ppm>0).length/data.length;
-  score += ppmOk * 20;
-  return Math.round(Math.min(100, Math.max(0, score)));
+async function handleFiles(files){
+  const log=document.getElementById('uploadLog');
+  for(const file of Array.from(files)){
+    log.innerHTML+=`<div>⏳ Procesando <strong>${file.name}</strong>...</div>`;
+    try{
+      const text=await extractPDFText(file);
+      const type=detectType(text,file.name);
+      log.innerHTML+=`<div style="color:var(--text3)">→ Tipo: <strong>${type}</strong></div>`;
+      if(type==='bt'){S.bt=parseBT(text);markDoc('doc-bt',true);log.innerHTML+=`<div style="color:var(--green)">✓ Balance tributario procesado. Ventas: ${fmt(S.bt.ventas)}</div>`;}
+      else if(type==='bc'){S.bc=parseBC(text);markDoc('doc-bc',true);log.innerHTML+=`<div style="color:var(--green)">✓ Balance clasificado procesado. Activos: ${fmt(S.bc.activos)}</div>`;}
+      else if(type==='f22'){S.f22=parseF22(text);if(S.f22.empresa){S.company=S.f22.empresa;document.getElementById('companyName').textContent=S.company;}markDoc('doc-f22',true);log.innerHTML+=`<div style="color:var(--green)">✓ F22 procesado — ${S.company||''}</div>`;}
+      else if(type==='cert'){S.cert={text};markDoc('doc-cert',true);log.innerHTML+=`<div style="color:var(--green)">✓ Certificado de renta procesado</div>`;}
+      else if(type==='fog'){S.fog={text};markDoc('doc-fog',true);log.innerHTML+=`<div style="color:var(--green)">✓ Documento FOGAPE procesado</div>`;}
+      else if(type==='f29'){markDoc('doc-f29',true);log.innerHTML+=`<div style="color:var(--green)">✓ Carpeta tributaria SII procesada</div>`;}
+      else{log.innerHTML+=`<div style="color:var(--amber)">⚠ Tipo de documento no reconocido</div>`;}
+    }catch(err){log.innerHTML+=`<div style="color:var(--red)">✗ Error: ${err.message}</div>`;}
+  }
+  updateDashboard();
+  log.innerHTML+=`<div style="color:var(--green);font-weight:600">✓ Dashboard actualizado — ve a Resumen ejecutivo</div>`;
 }
 
-function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
-
-function updateCharts(data, labels) {
-  const bases = data.map(d=>d.b);
-  const ivas  = data.map(d=>d.iva);
-  const ppms  = data.map(d=>d.ppm);
-
-  // Moving average
-  const ma3 = bases.map((v,i) => {
-    const sl = bases.slice(Math.max(0,i-2), i+1);
-    return sl.reduce((a,b)=>a+b,0)/sl.length;
-  });
-
-  // Variacion %
-  const vars = bases.map((v,i) => i===0 ? 0 : (v-bases[i-1])/bases[i-1]*100);
-
-  const gridColor = 'rgba(42,63,88,0.6)';
-  const tickColor = '#5A7A9A';
-
-  // Chart 1: Base
-  destroyChart('chartBase');
-  charts['chartBase'] = new Chart(document.getElementById('chartBase'), {
-    type:'bar',
-    data:{
-      labels,
-      datasets:[
-        {label:'Base Imponible',data:bases,backgroundColor:'rgba(74,144,217,0.35)',borderColor:'#4A90D9',borderWidth:1.5,borderRadius:3},
-        {label:'Prom. móvil 3M',data:ma3,type:'line',borderColor:'#B8962E',borderWidth:2,pointRadius:0,tension:.4,fill:false}
-      ]
-    },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickColor,font:{size:11}}}},
-      scales:{x:{ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
-              y:{ticks:{color:tickColor,font:{size:10},callback:v=>fmt(v)},grid:{color:gridColor}}}}
-  });
-
-  // Chart 2: IVA + PPM
-  destroyChart('chartIvaPpm');
-  charts['chartIvaPpm'] = new Chart(document.getElementById('chartIvaPpm'), {
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'IVA a pagar',data:ivas,backgroundColor:'rgba(245,166,35,0.5)',borderColor:'#F5A623',borderWidth:1.5,borderRadius:2},
-      {label:'PPM',data:ppms,backgroundColor:'rgba(46,204,138,0.4)',borderColor:'#2ECC8A',borderWidth:1.5,borderRadius:2}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickColor,font:{size:11}}}},
-      scales:{x:{ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
-              y:{ticks:{color:tickColor,font:{size:10},callback:v=>fmt(v)},grid:{color:gridColor}}}}
-  });
-
-  // Chart 3: Variacion
-  destroyChart('chartVariacion');
-  charts['chartVariacion'] = new Chart(document.getElementById('chartVariacion'), {
-    type:'bar',
-    data:{labels,datasets:[{
-      label:'Var. % mensual',
-      data:vars,
-      backgroundColor:vars.map(v=>v>=0?'rgba(46,204,138,0.5)':'rgba(229,80,74,0.5)'),
-      borderColor:vars.map(v=>v>=0?'#2ECC8A':'#E5504A'),
-      borderWidth:1.5,borderRadius:2
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickColor,font:{size:11}}}},
-      scales:{x:{ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
-              y:{ticks:{color:tickColor,font:{size:10},callback:v=>v.toFixed(0)+'%'},grid:{color:gridColor}}}}
-  });
+function calcScore(v,c,p,ta,tp,ebitda){
+  let s=0;
+  const m=v?(v-c)/v*100:0;
+  s+=m>40?25:m>25?18:m>10?10:0;
+  s+=p===0?25:0;
+  const e=ta?tp/ta*100:100;
+  s+=e<50?25:e<70?15:e<90?5:0;
+  s+=ebitda>0?25:ebitda>-v*0.05?10:0;
+  return Math.round(Math.min(100,Math.max(0,s)));
 }
 
-function updateInsights(data) {
-  const bases = data.map(d=>d.b);
-  const avg = bases.reduce((s,v)=>s+v,0)/bases.length;
-  const last = bases[bases.length-1];
-  const max = Math.max(...bases);
-  const maxPer = data[bases.indexOf(max)].p;
-  const growth = (bases[bases.length-1] - bases[0])/bases[0]*100;
-  const ivaTotal = data.reduce((s,d)=>s+d.iva,0);
-  const baseTotal = data.reduce((s,d)=>s+d.b,0);
-  const ivaRatio = ivaTotal/baseTotal*100;
+function updateDashboard(){
+  const bt=S.bt,bc=S.bc,f22=S.f22;
+  if(!bt&&!f22)return;
+  const v=f22?.ventas||bt?.ventas||0;
+  const c=bt?.costo||0,r=bt?.remuner||0,h=bt?.honor||0,g=bt?.gastos||0,a=bt?.arriendos||0,co=bt?.comisiones||0,i=bt?.intereses||0;
+  const p=bt?.perdida||0;
+  const mb=v-c,tg=r+h+g+a+co+i,ebitda=mb-tg;
+  const ta=bc?.activos||0,tp=bc?.pasivos||0,pat=ta-tp;
+  const caja=bc?.disponible||bt?.caja||0;
+  const end=ta?tp/ta*100:0;
+  const score=calcScore(v,c,p,ta,tp,ebitda);
+  const mbPct=v?mb/v*100:0;
 
-  const ins = [
-    {type:growth>=20?'green':growth>=0?'amber':'red',
-     title:'Tendencia de ingresos',
-     body:`La base imponible ${growth>=0?'creció':'cayó'} un ${Math.abs(growth).toFixed(1)}% durante el período analizado. El promedio mensual es ${fmt(avg)}. ${last>avg?'El último mes supera el promedio, señal positiva.':'El último mes está por debajo del promedio.'}`},
-    {type:ivaRatio<15?'green':ivaRatio<25?'amber':'red',
-     title:'Carga tributaria IVA',
-     body:`El IVA pagado representa el ${ivaRatio.toFixed(1)}% de los ingresos netos del período. ${ivaRatio<15?'Nivel adecuado, posiblemente por buenos créditos fiscales.':ivaRatio<25?'Nivel moderado. Revisar estrategia de créditos fiscales.':'Carga alta. Evaluar optimización de créditos IVA con el contador.'}`},
-    {type:'blue',
-     title:'Mes de mayor actividad',
-     body:`El período de mayor base imponible fue ${pLabelFull(maxPer)} con ${fmt(max)}. ${maxPer.includes('11')||maxPer.includes('12')?'Coherente con estacionalidad de fin de año.':maxPer.includes('05')||maxPer.includes('04')?'Peak en temporada media del año.':'Analizar factores que impulsaron este resultado.'}`},
-    {type:data.every(d=>d.ppm>0)?'green':'amber',
-     title:'Cumplimiento PPM',
-     body:`${data.filter(d=>d.ppm>0).length} de ${data.length} períodos registran PPM. ${data.every(d=>d.ppm>0)?'Cumplimiento total durante el período. Buena provisión para renta anual.':'Hay períodos sin PPM. Revisar con el contador para evitar diferencias en renta anual.'}`}
-  ];
+  document.getElementById('statusDot').style.background='var(--green)';
+  document.getElementById('statusText').textContent=`Análisis activo · ${S.company||'Empresa'} · Ejercicio ${f22?.año||'2025'}`;
 
-  document.getElementById('insightContainer').innerHTML = ins.map(i=>`
-    <div class="insight ${i.type}">
-      <div class="insight-title">${i.title}</div>
-      <div class="insight-body">${i.body}</div>
-    </div>`).join('');
-}
+  document.getElementById('k-ventas').textContent=fmt(v);
+  document.getElementById('k-resultado').textContent=fmt(p>0?-p:ebitda);
+  document.getElementById('k-resultado-card').className='kpi '+(p>0?'red':'green');
+  document.getElementById('k-resultado-sub').textContent=p>0?'Pérdida del ejercicio':'Utilidad del ejercicio';
+  document.getElementById('k-margen').textContent=pct(mb,v);
+  document.getElementById('k-margen-card').className='kpi '+(mbPct>30?'green':mbPct>15?'amber':'red');
+  document.getElementById('k-endeud').textContent=end.toFixed(1)+'%';
+  document.getElementById('k-endeud-card').className='kpi '+(end<60?'green':end<80?'amber':'red');
+  document.getElementById('k-caja').textContent=fmt(caja);
+  document.getElementById('k-score').textContent=score;
+  document.getElementById('k-score-label').textContent=score>=70?'Saludable':score>=50?'Atención':'Crítico';
+  document.getElementById('ringNum').textContent=score;
+  const d=339;
+  document.getElementById('ringCircle').setAttribute('stroke-dashoffset',d-d*score/100);
+  document.getElementById('ringCircle').setAttribute('stroke',score>=70?'#2ECC8A':score>=50?'#F5A623':'#E5504A');
+  setSem('s-rent',mbPct>30?'verde':mbPct>10?'amarillo':'rojo',mbPct>30?'BUENO':mbPct>10?'MEDIO':'CRÍTICO');
+  setSem('s-liq',caja>tp*0.15?'verde':'amarillo',caja>tp*0.15?'BUENO':'MEDIO');
+  setSem('s-end',end<60?'verde':end<80?'amarillo':'rojo',end<60?'BUENO':end<80?'MEDIO':'CRÍTICO');
+  setSem('s-sii',f22?'verde':'amarillo',f22?'AL DÍA':'SIN DATOS');
 
-function updateTable(data) {
-  const rows = [...data].reverse().map((d,i,arr) => {
-    const prev = arr[i+1];
-    const varPct = prev ? (d.b-prev.b)/prev.b*100 : null;
-    const estado = d.b > data.reduce((s,x)=>s+x.b,0)/data.length
-      ? '<span class="semaforo verde">SOBRE PROM</span>'
-      : '<span class="semaforo amarillo">BAJO PROM</span>';
-    return `<tr>
-      <td>${pLabelFull(d.p)}</td>
-      <td class="num">${fmtFull(d.b)}</td>
-      <td class="num">${fmtFull(d.d)}</td>
-      <td class="num">${fmtFull(d.c)}</td>
-      <td class="num">${fmtFull(d.iva)}</td>
-      <td class="num">${fmtFull(d.ppm)}</td>
-      <td class="${varPct===null?'num':varPct>=0?'pos':'neg'}">${varPct===null?'—':pct(varPct)}</td>
-      <td style="text-align:center">${estado}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('tableBody').innerHTML = rows;
+  if(p>0){document.getElementById('alertaRed').style.display='block';document.getElementById('alertaTitulo').textContent='⚠ La empresa registra pérdida en el ejercicio';document.getElementById('alertaCuerpo').textContent=`Pérdida de ${fmt(p)}. Los pasivos superan los activos en ${fmt(tp-ta)}. Requiere atención prioritaria.`;}
 
-  // Full chart
-  const allBases = RAW.map(d=>d.b);
-  const allLabels = RAW.map(d=>pLabel(d.p));
-  const ma6 = allBases.map((v,i)=>{const s=allBases.slice(Math.max(0,i-5),i+1);return s.reduce((a,b)=>a+b,0)/s.length;});
-  destroyChart('chartBaseFull');
-  charts['chartBaseFull'] = new Chart(document.getElementById('chartBaseFull'),{
-    type:'bar',data:{labels:allLabels,datasets:[
-      {label:'Base Imponible',data:allBases,backgroundColor:'rgba(74,144,217,0.3)',borderColor:'#4A90D9',borderWidth:1,borderRadius:2},
-      {label:'Media móvil 6M',data:ma6,type:'line',borderColor:'#B8962E',borderWidth:2.5,pointRadius:0,tension:.5,fill:false}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
-      scales:{x:{ticks:{color:'#5A7A9A',font:{size:9}},grid:{color:'rgba(42,63,88,0.6)'}},
-              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
-  });
+  // Charts
+  dC('chartWaterfall');
+  CH['chartWaterfall']=new Chart(document.getElementById('chartWaterfall'),{type:'bar',data:{labels:['Ventas','Costo','Remuner.','Honorar.','Gastos','Arriendos','Comis.','Intereses','Resultado'],datasets:[{data:[v,-c,-r,-h,-g,-a,-co,-i,-(p||0)],backgroundColor:['#4A90D9','#E5504A','#E5504A','#E5504A','#E5504A','#E5504A','#E5504A','#E5504A',p>0?'#E5504A':'#2ECC8A'],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TICK,font:{size:9}},grid:{color:GRID}},y:{ticks:{color:TICK,font:{size:10},callback:v=>fmt(Math.abs(v))},grid:{color:GRID}}}}});
 
-  // Trimestral
-  const trims = {};
-  RAW.forEach(d=>{const [y,m]=d.p.split('-');const q=Math.ceil(parseInt(m)/3);const k=`${y} Q${q}`;trims[k]=(trims[k]||0)+d.b;});
-  const tk=Object.keys(trims).slice(-8);
-  destroyChart('chartTrimestre');
-  charts['chartTrimestre'] = new Chart(document.getElementById('chartTrimestre'),{
-    type:'bar',data:{labels:tk,datasets:[{label:'Base Imponible',data:tk.map(k=>trims[k]),
-      backgroundColor:'rgba(184,150,46,0.4)',borderColor:'#B8962E',borderWidth:1.5,borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
-      scales:{x:{ticks:{color:'#5A7A9A',font:{size:9}},grid:{color:'rgba(42,63,88,0.6)'}},
-              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
-  });
+  dC('chartCostos');
+  const cd=[c,r,h,g,a,co,i].filter(x=>x>0);
+  const cl=['Costo venta','Remuner.','Honorarios','Gtos grls','Arriendos','Comisiones','Intereses'].filter((_,idx)=>[c,r,h,g,a,co,i][idx]>0);
+  CH['chartCostos']=new Chart(document.getElementById('chartCostos'),{type:'doughnut',data:{labels:cl,datasets:[{data:cd,backgroundColor:['#4A90D9','#2ECC8A','#F5A623','#E5504A','#B8962E','#7B68EE','#20B2AA'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:TICK,font:{size:10},boxWidth:12}}}}});
 
-  // Estacionalidad
-  const byMonth = {};
-  RAW.forEach(d=>{const m=parseInt(d.p.split('-')[1])-1;if(!byMonth[m])byMonth[m]=[];byMonth[m].push(d.b);});
-  const estData = Array.from({length:12},(_,i)=>byMonth[i]?(byMonth[i].reduce((a,b)=>a+b,0)/byMonth[i].length):0);
-  destroyChart('chartEstacional');
-  charts['chartEstacional'] = new Chart(document.getElementById('chartEstacional'),{
-    type:'bar',data:{labels:MONTHS_ES,datasets:[{label:'Prom. mensual histórico',data:estData,
-      backgroundColor:estData.map(v=>v>estData.reduce((a,b)=>a+b,0)/12*1.1?'rgba(46,204,138,0.5)':'rgba(74,144,217,0.35)'),
-      borderWidth:1.5,borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
-      scales:{x:{ticks:{color:'#5A7A9A',font:{size:9}},grid:{color:'rgba(42,63,88,0.6)'}},
-              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
-  });
-}
+  dC('chartBalance');
+  CH['chartBalance']=new Chart(document.getElementById('chartBalance'),{type:'bar',data:{labels:['Activos','Pasivos','Patrimonio'],datasets:[{data:[ta,tp,pat],backgroundColor:['#4A90D9',tp>ta?'#E5504A':'#F5A623',pat>=0?'#2ECC8A':'#E5504A'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:TICK},grid:{color:GRID}},y:{ticks:{color:TICK,callback:v=>fmt(v)},grid:{color:GRID}}}}});
 
-function updateIvaTab(data) {
-  const ivas = data.map(d=>d.iva);
-  const bases = data.map(d=>d.b);
-  const prom = ivas.reduce((a,b)=>a+b,0)/ivas.length;
-  const maxI = ivas.indexOf(Math.max(...ivas));
-  const minI = ivas.indexOf(Math.min(...ivas));
-  const ratio = ivas.reduce((a,b)=>a+b,0)/bases.reduce((a,b)=>a+b,0)*100;
+  // Tabla resultado
+  const rows=[{l:'Ventas / Ingresos del giro',v:v,b:true},{l:'(-) Costo de venta',v:-c},{l:'= Margen bruto',v:mb,b:true,tot:true},{l:'(-) Remuneraciones',v:-r},{l:'(-) Honorarios',v:-h},{l:'(-) Gastos generales',v:-g},{l:'(-) Arriendos',v:-a},{l:'(-) Comisiones',v:-co},{l:'(-) Intereses',v:-i},{l:'= Resultado del ejercicio',v:-(p||0),b:true,tot:true}].filter(row=>row.v!==0);
+  document.getElementById('tablaResultado').innerHTML=rows.map(row=>`<tr style="${row.b?'font-weight:600;background:var(--bg3)':''}"><td>${row.l}</td><td class="${row.v>=0?'pos':'neg'}">${fmtF(row.v)}</td><td class="num">${v?(Math.abs(row.v)/v*100).toFixed(1)+'%':'—'}</td><td style="text-align:center">${row.tot?(row.v>=0?'<span class="sem verde">POSITIVO</span>':'<span class="sem rojo">NEGATIVO</span>'):''}  </td></tr>`).join('');
 
-  document.getElementById('kpi-iva-prom').textContent = fmt(prom);
-  document.getElementById('kpi-iva-max-mes').textContent = pLabel(data[maxI].p);
-  document.getElementById('kpi-iva-min-mes').textContent = pLabel(data[minI].p);
-  document.getElementById('kpi-iva-ratio').textContent = ratio.toFixed(1) + '%';
+  // Balance tab
+  document.getElementById('b-activo').textContent=fmt(ta);
+  document.getElementById('b-pasivo').textContent=fmt(tp);
+  document.getElementById('b-pasivo-card').className='kpi '+(tp>ta?'red':'amber');
+  document.getElementById('b-patrimonio').textContent=fmt(pat);
+  document.getElementById('b-ratio').textContent=tp?(ta/tp).toFixed(2):'—';
+  const bi=[{l:'Caja y disponible',v:bc?.disponible||bt?.caja||0,t:'Activo'},{l:'Cuentas por cobrar',v:bt?.clientes||0,t:'Activo'},{l:'Cuentas por pagar',v:bc?.cuentas_pagar||0,t:'Pasivo'},{l:'Préstamo banco',v:bt?.deuda||0,t:'Pasivo'},{l:'Capital social',v:bc?.capital||0,t:'Patrimonio'},{l:'Pérdida ejercicio',v:bc?.perdida_ej||0,t:'Patrimonio'}].filter(r=>r.v>0);
+  document.getElementById('tablaBalance').innerHTML=bi.map(r=>`<tr><td>${r.l}</td><td class="num">${fmtF(r.v)}</td><td style="text-align:center"><span class="sem ${r.t==='Activo'?'verde':r.t==='Pasivo'?'rojo':'amarillo'}">${r.t.toUpperCase()}</span></td><td style="text-align:center">—</td></tr>`).join('');
 
-  const labels = data.map(d=>pLabel(d.p));
-  destroyChart('chartIvaDetalle');
-  charts['chartIvaDetalle'] = new Chart(document.getElementById('chartIvaDetalle'),{
-    type:'bar',data:{labels,datasets:[
-      {label:'Débitos IVA',data:data.map(d=>d.d),backgroundColor:'rgba(229,80,74,0.35)',borderColor:'#E5504A',borderWidth:1.5,borderRadius:2},
-      {label:'Créditos IVA',data:data.map(d=>d.c),backgroundColor:'rgba(46,204,138,0.35)',borderColor:'#2ECC8A',borderWidth:1.5,borderRadius:2},
-      {label:'IVA neto a pagar',data:data.map(d=>d.iva),type:'line',borderColor:'#F5A623',borderWidth:2.5,pointRadius:3,tension:.4,fill:false}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
-      scales:{x:{ticks:{color:'#5A7A9A',font:{size:10}},grid:{color:'rgba(42,63,88,0.6)'}},
-              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
-  });
-
-  document.getElementById('ivaInsights').innerHTML = `
-    <div class="insight amber">
-      <div class="insight-title">Optimización de créditos IVA</div>
-      <div class="insight-body">El ratio IVA pagado / ingresos es ${ratio.toFixed(1)}%. Un ratio saludable para servicios está entre 8–15%. ${ratio>20?'Evaluar con el contador si hay oportunidades de créditos IVA no utilizados (compras, activos).':'El nivel actual es manejable.'}</div>
-    </div>
-    <div class="insight blue">
-      <div class="insight-title">Mes de mayor presión tributaria</div>
-      <div class="insight-body">El mes con mayor IVA pagado fue ${pLabelFull(data[maxI].p)} con ${fmtFull(data[maxI].iva)}. Planificar el flujo de caja considerando este pico estacional para evitar apuros de liquidez.</div>
-    </div>`;
-}
-
-function updateProjection() {
-  // Last 6 months as base for projection
-  const recent = RAW.slice(-6);
-  const avgBase = recent.reduce((s,d)=>s+d.b,0)/recent.length;
-  const avgIva  = recent.reduce((s,d)=>s+d.iva,0)/recent.length;
-  const avgPpm  = recent.reduce((s,d)=>s+d.ppm,0)/recent.length;
-
-  // Seasonal factors by month
-  const byMonth = {};
-  RAW.forEach(d=>{const m=parseInt(d.p.split('-')[1])-1;if(!byMonth[m])byMonth[m]=[];byMonth[m].push(d.b);});
-  const monthAvg = Array.from({length:12},(_,i)=>byMonth[i]?(byMonth[i].reduce((a,b)=>a+b,0)/byMonth[i].length):avgBase);
-  const globalAvg = monthAvg.reduce((a,b)=>a+b,0)/12;
-  const factors = monthAvg.map(v=>v/globalAvg);
-
-  // Next 6 months
-  const lastDate = RAW[RAW.length-1].p;
-  const [ly,lm] = lastDate.split('-').map(Number);
-  const projMonths = [];
-  for(let i=1;i<=6;i++){
-    const d = new Date(ly, lm-1+i, 1);
-    const y = d.getFullYear();
-    const m = d.getMonth();
-    const base = avgBase * factors[m] * (1 + 0.02*i); // slight growth trend
-    projMonths.push({p:`${y}-${String(m+1).padStart(2,'0')}`,base,iva:base*0.145,ppm:base*0.012,factor:factors[m]});
+  // Tributario
+  if(f22){
+    document.getElementById('t-año').textContent=f22.año;
+    document.getElementById('t-ppm').textContent=fmt(f22.ppm);
+    document.getElementById('t-devol').textContent=fmt(f22.devolucion);
+    document.getElementById('t-resultado').textContent=f22.devolucion>0?'Devolución':'A pagar';
+    document.getElementById('ivaInsights').innerHTML=`<div class="insight ${f22.devolucion>0?'green':'amber'}"><div class="insight-title">F22 año tributario ${f22.año}</div><div class="insight-body">Ingresos: ${fmtF(f22.ingresos)} · Egresos: ${fmtF(f22.egresos)}<br>PPM: ${fmtF(f22.ppm)} · ${f22.devolucion>0?'Devolución: '+fmtF(f22.devolucion):'Sin devolución'}</div></div><div class="insight blue"><div class="insight-title">Régimen tributario</div><div class="insight-body">Empresa bajo Régimen Pro Pyme (14D). Contabilidad completa. Declara renta de primera categoría.</div></div>`;
   }
 
-  // Projection chart
-  const histLabels = RAW.slice(-12).map(d=>pLabel(d.p));
-  const histBases  = RAW.slice(-12).map(d=>d.b);
-  const projLabels = projMonths.map(d=>pLabel(d.p));
-  const projBases  = projMonths.map(d=>Math.round(d.base));
-  const allLabels  = [...histLabels, ...projLabels];
-  const allHist    = [...histBases, ...Array(6).fill(null)];
-  const allProj    = [...Array(12).fill(null), ...projBases];
-  const allProjHi  = [...Array(12).fill(null), ...projBases.map(v=>Math.round(v*1.15))];
-  const allProjLo  = [...Array(12).fill(null), ...projBases.map(v=>Math.round(v*0.85))];
+  // Insights
+  document.getElementById('insightContainer').innerHTML=[
+    {tp:mbPct>30?'green':mbPct>15?'amber':'red',ti:'Margen bruto',bo:`Margen bruto: ${mbPct.toFixed(1)}% (${fmt(mb)}). ${mbPct>30?'Excelente margen.':mbPct>15?'Margen moderado. Revisar precios y costo.':'Margen bajo — costo de venta consume más del 85% de ventas.'}`},
+    {tp:p>0?'red':'green',ti:'Resultado del ejercicio',bo:p>0?`Pérdida de ${fmt(p)}. Los gastos operacionales superan el margen bruto. Acción urgente: reducir gastos fijos y revisar pricing.`:'El ejercicio cerró con utilidad. Mantener control de costos y planificar crecimiento.'},
+    {tp:end<60?'green':end<80?'amber':'red',ti:'Nivel de endeudamiento',bo:`Endeudamiento: ${end.toFixed(1)}%. ${end<60?'Nivel saludable.':end<80?'Nivel moderado. Monitorear capacidad de pago.':'Nivel alto. Pasivos superan activos — evaluar refinanciamiento urgente.'}`},
+    {tp:'blue',ti:'Caja disponible',bo:`Caja al cierre: ${fmt(caja)}. ${caja>tp*0.15?'Liquidez suficiente para cubrir obligaciones de corto plazo.':'Liquidez ajustada respecto a los pasivos. Proyectar flujo de caja mensual.'}`}
+  ].map(i=>`<div class="insight ${i.tp}"><div class="insight-title">${i.ti}</div><div class="insight-body">${i.bo}</div></div>`).join('');
 
-  destroyChart('chartProyeccion');
-  charts['chartProyeccion'] = new Chart(document.getElementById('chartProyeccion'),{
-    type:'line',
-    data:{labels:allLabels,datasets:[
-      {label:'Histórico',data:allHist,borderColor:'#4A90D9',backgroundColor:'rgba(74,144,217,0.15)',borderWidth:2.5,pointRadius:3,tension:.4,fill:true},
-      {label:'Proyección',data:allProj,borderColor:'#B8962E',borderWidth:2.5,pointRadius:4,tension:.4,borderDash:[6,3],fill:false},
-      {label:'Banda alta (+15%)',data:allProjHi,borderColor:'rgba(184,150,46,0.3)',borderWidth:1,pointRadius:0,tension:.4,fill:'+1'},
-      {label:'Banda baja (-15%)',data:allProjLo,borderColor:'rgba(184,150,46,0.3)',borderWidth:1,pointRadius:0,tension:.4,backgroundColor:'rgba(184,150,46,0.08)',fill:false},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11},filter:i=>i.text!=='Banda alta (+15%)&&i.text!==Banda baja (-15%)'}}},
-      scales:{x:{ticks:{color:'#5A7A9A',font:{size:10}},grid:{color:'rgba(42,63,88,0.6)'}},
-              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
-  });
-
-  // Proj cards
-  document.getElementById('projCards').innerHTML = projMonths.map(d=>`
-    <div class="proj-card">
-      <span class="proj-badge">PROYECCIÓN</span>
-      <div class="proj-month">${pLabelFull(d.p)}</div>
-      <div class="proj-row"><span class="proj-key">Base estimada</span><span class="proj-val">${fmt(d.base)}</span></div>
-      <div class="proj-row"><span class="proj-key">IVA estimado</span><span class="proj-val">${fmt(d.iva)}</span></div>
-      <div class="proj-row"><span class="proj-key">PPM estimado</span><span class="proj-val">${fmt(d.ppm)}</span></div>
-      <div class="proj-row"><span class="proj-key">Factor estacional</span><span class="proj-val">${(d.factor*100).toFixed(0)}%</span></div>
-    </div>`).join('');
-
-  document.getElementById('projInsights').innerHTML = `
-    <div class="insight amber">
-      <div class="insight-title">Metodología de proyección</div>
-      <div class="insight-body">La proyección combina el promedio de los últimos 6 meses con factores de estacionalidad calculados mes a mes sobre el historial de 36 períodos. Incluye una tendencia de crecimiento gradual del 2% mensual. La banda de confianza es ±15%.</div>
+  // Diagnóstico
+  document.getElementById('diagnosticoContent').innerHTML=`
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      <div class="kpi ${score>=70?'green':score>=50?'amber':'red'}"><div class="kpi-label">DIAGNÓSTICO GENERAL</div><div class="kpi-value">${score}/100</div><div class="kpi-sub">${score>=70?'Empresa saludable':score>=50?'Requiere atención':'Situación crítica'}</div></div>
+      <div class="kpi ${p>0?'red':'green'}"><div class="kpi-label">RENTABILIDAD</div><div class="kpi-value">${p>0?'PÉRDIDA':'UTILIDAD'}</div><div class="kpi-sub">${fmt(p>0?-p:ebitda)}</div></div>
+      <div class="kpi ${end>80?'red':end>60?'amber':'green'}"><div class="kpi-label">SOLVENCIA</div><div class="kpi-value">${end>80?'CRÍTICA':end>60?'MODERADA':'SANA'}</div><div class="kpi-sub">Endeudamiento ${end.toFixed(0)}%</div></div>
     </div>
-    <div class="insight blue">
-      <div class="insight-title">Recomendación de actualización</div>
-      <div class="insight-body">Cargar el F29 de cada mes al cerrar el período para que la proyección se recalibre automáticamente con datos reales. La precisión mejora significativamente con datos actualizados.</div>
+    <div class="sec-label">Plan de acción Kingdom Legacy</div>
+    <div class="insight-grid">
+      <div class="insight red"><div class="insight-title">🚨 Prioridad 1 — Resultado del ejercicio</div><div class="insight-body">${p>0?`Pérdida de ${fmt(p)}. Acciones: (1) Identificar los 3 mayores gastos evitables, (2) Revisar política de precios, (3) Evaluar rentabilidad por línea de producto/servicio.`:'La empresa es rentable. Foco en mantener margen y proyectar crecimiento ordenado.'}</div></div>
+      <div class="insight amber"><div class="insight-title">⚠ Prioridad 2 — Estructura de deuda</div><div class="insight-body">${end>80?`Pasivos en ${end.toFixed(0)}% de activos. Evaluar: (1) Renegociación con proveedores, (2) Refinanciamiento bancario, (3) Aporte de capital de socios.`:`Endeudamiento en ${end.toFixed(0)}%, nivel manejable. Mantener disciplina financiera.`}</div></div>
+      <div class="insight blue"><div class="insight-title">📊 Prioridad 3 — Control de gestión</div><div class="insight-body">Implementar tablero de KPIs mensual: ventas vs presupuesto, margen bruto real, flujo de caja proyectado. Kingdom Legacy acompaña con reportes automáticos y revisión mensual.</div></div>
+      <div class="insight green"><div class="insight-title">🎯 Oportunidad identificada</div><div class="insight-body">${mbPct>30?`Margen bruto sólido (${mbPct.toFixed(0)}%). El problema está en los gastos operacionales. Optimizando gastos generales y comisiones la empresa puede recuperar la utilidad.`:`El margen bruto (${mbPct.toFixed(0)}%) es el punto crítico. Revisar costos de producción y estrategia de precios es la palanca más importante.`}</div></div>
     </div>`;
 }
-
-function setPeriod(n, el) {
-  currentPeriod = n;
-  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  updateAll();
-}
-
-function showTab(id, el) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  el.classList.add('active');
-}
-
-const API_URL = "https://kl-backend-4gk3.onrender.com";
-
-async function handleFiles(files) {
-  const log = document.getElementById('uploadLog');
-  const tbody = document.getElementById('fileTable');
-
-  for (const f of Array.from(files)) {
-    const isPDF  = f.name.toLowerCase().endsWith('.pdf');
-    const isXLSX = f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls');
-    const tipo   = isPDF ? 'PDF Carpeta Tributaria SII' : 'Excel de ventas';
-
-    log.innerHTML += `<div>⏳ Enviando <strong>${f.name}</strong> (${(f.size/1024).toFixed(1)} KB) al servidor...</div>`;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${f.name}</td><td>${tipo}</td><td>Procesando...</td><td><span class="semaforo amarillo">PROCESANDO</span></td>`;
-    tbody.appendChild(tr);
-
-    try {
-      const endpoint = isPDF ? '/upload/f29' : '/upload/ventas';
-      const formData = new FormData();
-      formData.append('file', f);
-
-      const resp = await fetch(API_URL + endpoint, { method: 'POST', body: formData });
-      if (!resp.ok) throw new Error(`Error HTTP ${resp.status}`);
-      const data = await resp.json();
-
-      if (isPDF && data.datos) {
-        const n = data.periodos_extraidos;
-        log.innerHTML += `<div style="color:var(--green)">✓ ${f.name} — ${n} períodos F29 extraídos y cargados al dashboard.</div>`;
-        tr.cells[2].textContent = `${n} períodos detectados`;
-        tr.cells[3].innerHTML = '<span class="semaforo verde">PROCESADO</span>';
-
-        // Merge new data into RAW and refresh dashboard
-        if (data.datos.length > 0) {
-          data.datos.forEach(d => {
-            if (!RAW.find(r => r.p === d.period)) {
-              RAW.push({
-                p: d.period,
-                b: d.base_imponible || 0,
-                d: d.debitos_iva || 0,
-                c: d.creditos_iva || 0,
-                iva: d.iva_pagar || 0,
-                ppm: d.ppm || 0
-              });
-            }
-          });
-          RAW.sort((a,b) => a.p.localeCompare(b.p));
-          document.getElementById('totalPeriods').textContent = RAW.length;
-          document.getElementById('lastPeriod').textContent = pLabelFull(RAW[RAW.length-1].p);
-          updateAll();
-          log.innerHTML += `<div style="color:var(--green)">↻ Dashboard actualizado con ${RAW.length} períodos totales.</div>`;
-        }
-
-      } else if (isXLSX && data.resumen) {
-        const r = data.resumen;
-        const period = r.period || 'período';
-        log.innerHTML += `<div style="color:var(--green)">✓ ${f.name} — Ventas ${period}: Netas $${Math.round(r.ventas_netas||0).toLocaleString('es-CL')} · Rentabilidad ${r.rentabilidad_pct||0}%</div>`;
-        tr.cells[2].textContent = period;
-        tr.cells[3].innerHTML = '<span class="semaforo verde">PROCESADO</span>';
-      } else {
-        log.innerHTML += `<div style="color:var(--amber)">⚠ ${f.name} procesado pero sin datos reconocibles.</div>`;
-        tr.cells[3].innerHTML = '<span class="semaforo amarillo">REVISIÓN</span>';
-      }
-
-    } catch(err) {
-      log.innerHTML += `<div style="color:var(--red)">✗ Error procesando ${f.name}: ${err.message}</div>`;
-      tr.cells[3].innerHTML = '<span class="semaforo rojo">ERROR</span>';
-    }
-  }
-}
-
-function exportPDF() {
-  alert('Para exportar: usa Ctrl+P en tu navegador y selecciona "Guardar como PDF". El dashboard se imprime completo con todos los gráficos.');
-}
-
-// INIT
-updateAll();
 </script>
 </body>
 </html>
