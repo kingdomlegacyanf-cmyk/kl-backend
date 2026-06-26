@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingdom Legacy — Diagnóstico Financiero</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --navy: #1C2E4A;
+    --navy2: #243756;
+    --gold: #B8962E;
+    --gold-light: #D4AF5A;
+    --bg: #0F1923;
+    --bg2: #162030;
+    --bg3: #1E2D40;
+    --bg4: #243347;
+    --border: #2A3F58;
+    --text: #E8EFF7;
+    --text2: #8BA3BE;
+    --text3: #5A7A9A;
+    --green: #2ECC8A;
+    --green-bg: rgba(46,204,138,0.1);
+    --red: #E5504A;
+    --red-bg: rgba(229,80,74,0.1);
+    --amber: #F5A623;
+    --amber-bg: rgba(245,166,35,0.1);
+    --blue: #4A90D9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* TOP BAR */
+  .topbar { background: var(--navy); border-bottom: 2px solid var(--gold); padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-crown { font-size: 22px; color: var(--gold); }
+  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .06em; color: #fff; }
+  .brand-sep { width: 1px; height: 24px; background: var(--border); }
+  .brand-sub { font-size: 12px; color: var(--text2); letter-spacing: .04em; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .company-tag { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
+  .company-tag span { color: var(--text); font-weight: 600; }
+  .btn { padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; letter-spacing: .03em; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+
+  /* TABS */
+  .tabs { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; gap: 2px; }
+  .tab { padding: 13px 18px; font-size: 13px; font-weight: 500; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* LAYOUT */
+  .main { padding: 24px 28px; max-width: 1400px; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+
+  /* PERIOD SELECTOR */
+  .period-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .period-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); transition: all .15s; }
+  .period-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .period-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .period-label { font-size: 12px; color: var(--text3); margin-right: 4px; }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi.green::before { background: var(--green); }
+  .kpi.red::before { background: var(--red); }
+  .kpi.amber::before { background: var(--amber); }
+  .kpi.blue::before { background: var(--blue); }
+  .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 10px; font-weight: 500; letter-spacing: .04em; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 8px; }
+  .kpi-value.sm { font-size: 20px; }
+  .kpi-delta { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta.flat { color: var(--text3); }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* SEMAFORO */
+  .semaforo { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .semaforo.verde { background: var(--green-bg); color: var(--green); }
+  .semaforo.amarillo { background: var(--amber-bg); color: var(--amber); }
+  .semaforo.rojo { background: var(--red-bg); color: var(--red); }
+  .semaforo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* CHARTS */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .chart-card.wide { grid-column: span 2; }
+  .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 18px; }
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap.tall { height: 280px; }
+
+  /* TABLE */
+  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 8px 12px; color: var(--text3); font-weight: 600; letter-spacing: .04em; font-size: 11px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 12px; border-bottom: 1px solid rgba(42,63,88,.4); color: var(--text2); }
+  tr:hover td { background: var(--bg3); }
+  td.num { text-align: right; font-family: 'Courier New', monospace; color: var(--text); }
+  td.pos { color: var(--green); text-align: right; font-weight: 600; }
+  td.neg { color: var(--red); text-align: right; font-weight: 600; }
+
+  /* INSIGHT CARDS */
+  .insights { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .insight { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; border-left: 3px solid; }
+  .insight.green { border-left-color: var(--green); }
+  .insight.red { border-left-color: var(--red); }
+  .insight.amber { border-left-color: var(--amber); }
+  .insight.blue { border-left-color: var(--blue); }
+  .insight-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .insight-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* PROYECCION */
+  .proj-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .proj-card { background: var(--bg2); border: 1px dashed var(--border); border-radius: 10px; padding: 18px; }
+  .proj-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(184,150,46,.15); color: var(--gold); letter-spacing: .06em; margin-bottom: 10px; }
+  .proj-month { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+  .proj-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(42,63,88,.3); }
+  .proj-row:last-child { border-bottom: none; }
+  .proj-key { font-size: 11px; color: var(--text3); }
+  .proj-val { font-size: 12px; font-weight: 600; color: var(--text); }
+
+  /* UPLOAD ZONE */
+  .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 24px; }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: rgba(184,150,46,.05); }
+  .upload-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .upload-sub { font-size: 12px; color: var(--text3); }
+  #fileInput { display: none; }
+
+  /* STATUS BAR */
+  .status-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg3); border-radius: 8px; margin-bottom: 20px; font-size: 12px; color: var(--text2); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* SCORE RING */
+  .score-ring { display: flex; flex-direction: column; align-items: center; }
+  .ring-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto 12px; }
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-score { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .ring-num { font-size: 28px; font-weight: 700; color: var(--text); }
+  .ring-label { font-size: 10px; color: var(--text3); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  @media (max-width: 768px) {
+    .chart-grid, .chart-grid-3, .insights, .proj-grid { grid-template-columns: 1fr; }
+    .chart-card.wide { grid-column: span 1; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-crown">♛</span>
+    <span class="brand-name">KINGDOM LEGACY</span>
+    <div class="brand-sep"></div>
+    <span class="brand-sub">Diagnóstico Financiero</span>
+  </div>
+  <div class="topbar-right">
+    <div class="company-tag">Empresa: <span id="companyName">Online Eventos HB SPA</span></div>
+    <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">+ Cargar archivos</button>
+    <button class="btn btn-gold" onclick="exportPDF()">Exportar PDF</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('resumen',this)">Resumen ejecutivo</div>
+  <div class="tab" onclick="showTab('ingresos',this)">Ingresos y ventas</div>
+  <div class="tab" onclick="showTab('iva',this)">IVA y tributario</div>
+  <div class="tab" onclick="showTab('proyeccion',this)">Proyección</div>
+  <div class="tab" onclick="showTab('carga',this)">Cargar datos</div>
+</div>
+
+<div class="main">
+
+<!-- PERIOD SELECTOR -->
+<div class="period-bar">
+  <span class="period-label">Período:</span>
+  <div class="period-btn active" onclick="setPeriod(12,this)">Últimos 12M</div>
+  <div class="period-btn" onclick="setPeriod(24,this)">Últimos 24M</div>
+  <div class="period-btn" onclick="setPeriod(36,this)">Todo (36M)</div>
+  <div class="period-btn" onclick="setPeriod(6,this)">Últimos 6M</div>
+  <div style="margin-left:auto;font-size:12px;color:var(--text3)" id="periodRange"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: RESUMEN -->
+<!-- ============================================================ -->
+<div id="tab-resumen" class="panel active">
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span>Análisis activo · <span id="totalPeriods">36</span> períodos cargados · Datos al <span id="lastPeriod">Marzo 2026</span></span>
+  </div>
+
+  <!-- KPIs -->
+  <div class="section-label">Indicadores clave del período</div>
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="kpi-label">BASE IMPONIBLE ACUM.</div>
+      <div class="kpi-value sm" id="kpi-base">$0</div>
+      <div class="kpi-delta up" id="kpi-base-delta">↑ 0%</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">PROMEDIO MENSUAL</div>
+      <div class="kpi-value sm" id="kpi-prom">$0</div>
+      <div class="kpi-sub" id="kpi-prom-sub">vs período anterior</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">IVA PAGADO ACUM.</div>
+      <div class="kpi-value sm" id="kpi-iva">$0</div>
+      <div class="kpi-delta" id="kpi-iva-delta">—</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">PPM ACUMULADO</div>
+      <div class="kpi-value sm" id="kpi-ppm">$0</div>
+      <div class="kpi-sub">Provisión mensual renta</div>
+    </div>
+    <div class="kpi" id="kpi-trend-card">
+      <div class="kpi-label">TENDENCIA INGRESOS</div>
+      <div class="kpi-value sm" id="kpi-trend">+0%</div>
+      <div class="kpi-sub">Crecimiento período</div>
+    </div>
+    <div class="kpi" id="kpi-health-card">
+      <div class="kpi-label">SALUD FISCAL</div>
+      <div id="kpi-health" style="margin-top:6px">—</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="chart-grid" style="grid-template-columns: 2fr 1fr; margin-bottom:16px;">
+    <div class="chart-card wide" style="grid-column:auto">
+      <div class="chart-title">Evolución de base imponible mensual</div>
+      <div class="chart-sub">Ingresos netos declarados al SII — Formulario 29</div>
+      <div class="chart-wrap tall"><canvas id="chartBase"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Score de salud financiera</div>
+      <div class="chart-sub">Evaluación multidimensional</div>
+      <div class="score-ring" style="margin-top:16px;">
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#1E2D40" stroke-width="12"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#B8962E" stroke-width="12"
+              stroke-dasharray="314" stroke-dashoffset="78" stroke-linecap="round" id="ringCircle"/>
+          </svg>
+          <div class="ring-score"><div class="ring-num" id="ringScore">75</div><div class="ring-label">/ 100</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3)">Crecimiento</div>
+            <div class="semaforo verde" style="margin:4px auto;display:inline-flex;" id="score-crec">BUENO</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3)">IVA</div>
+            <div class="semaforo amarillo" style="margin:4px auto;display:inline-flex;" id="score-iva">MEDIO</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3)">Estabilidad</div>
+            <div class="semaforo amarillo" style="margin:4px auto;display:inline-flex;" id="score-est">MEDIO</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3)">PPM</div>
+            <div class="semaforo verde" style="margin:4px auto;display:inline-flex;" id="score-ppm">BUENO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">IVA pagado vs PPM mensual</div>
+      <div class="chart-sub">Carga tributaria por período</div>
+      <div class="chart-wrap"><canvas id="chartIvaPpm"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Variación mensual de ingresos</div>
+      <div class="chart-sub">% de cambio respecto al mes anterior</div>
+      <div class="chart-wrap"><canvas id="chartVariacion"></canvas></div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="section-label">Observaciones del período</div>
+  <div class="insights" id="insightContainer"></div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: INGRESOS -->
+<!-- ============================================================ -->
+<div id="tab-ingresos" class="panel">
+  <div class="section-label">Análisis detallado de ingresos</div>
+  <div class="chart-card" style="margin-bottom:16px;">
+    <div class="chart-title">Base imponible — vista completa 36 meses</div>
+    <div class="chart-sub">Con línea de tendencia y promedio móvil 3 meses</div>
+    <div class="chart-wrap" style="height:300px;"><canvas id="chartBaseFull"></canvas></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Distribución por trimestre</div>
+      <div class="chart-sub">Base imponible acumulada por trimestre</div>
+      <div class="chart-wrap"><canvas id="chartTrimestre"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Estacionalidad mensual</div>
+      <div class="chart-sub">Promedio por mes del año (todos los años)</div>
+      <div class="chart-wrap"><canvas id="chartEstacional"></canvas></div>
+    </div>
+  </div>
+  <div class="section-label">Tabla de períodos</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Período</th>
+          <th style="text-align:right">Base Imponible</th>
+          <th style="text-align:right">Débitos IVA</th>
+          <th style="text-align:right">Créditos IVA</th>
+          <th style="text-align:right">IVA a pagar</th>
+          <th style="text-align:right">PPM</th>
+          <th style="text-align:right">Var. Base %</th>
+          <th style="text-align:center">Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: IVA -->
+<!-- ============================================================ -->
+<div id="tab-iva" class="panel">
+  <div class="section-label">Comportamiento tributario</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi amber">
+      <div class="kpi-label">IVA PROMEDIO MENSUAL</div>
+      <div class="kpi-value sm" id="kpi-iva-prom">$0</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">MES MAYOR CARGA IVA</div>
+      <div class="kpi-value sm" id="kpi-iva-max-mes">—</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">MES MENOR CARGA IVA</div>
+      <div class="kpi-value sm" id="kpi-iva-min-mes">—</div>
+    </div>
+    <div class="kpi" id="kpi-iva-ratio-card">
+      <div class="kpi-label">RATIO IVA / INGRESOS</div>
+      <div class="kpi-value sm" id="kpi-iva-ratio">0%</div>
+      <div class="kpi-sub">Promedio del período</div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px;">
+    <div class="chart-title">IVA determinado vs créditos fiscales</div>
+    <div class="chart-sub">Comparativo mensual — débitos y créditos IVA</div>
+    <div class="chart-wrap tall"><canvas id="chartIvaDetalle"></canvas></div>
+  </div>
+  <div class="insights" id="ivaInsights"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: PROYECCIÓN -->
+<!-- ============================================================ -->
+<div id="tab-proyeccion" class="panel">
+  <div class="section-label">Proyección de períodos futuros</div>
+  <div class="status-bar">
+    <div class="status-dot" style="background:var(--amber)"></div>
+    <span>Proyección basada en tendencia histórica y estacionalidad observada · Actualizar con datos reales al cerrar cada período</span>
+  </div>
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">Histórico + proyección 6 meses</div>
+    <div class="chart-sub">Zona grisada = proyección estimada con banda de confianza ±15%</div>
+    <div class="chart-wrap tall"><canvas id="chartProyeccion"></canvas></div>
+  </div>
+  <div class="section-label">Detalle de proyección mensual</div>
+  <div class="proj-grid" id="projCards"></div>
+  <div class="insights" id="projInsights"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: CARGA DE DATOS -->
+<!-- ============================================================ -->
+<div id="tab-carga" class="panel">
+  <div class="section-label">Cargar nuevos datos</div>
+  <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.pdf,.csv" onchange="handleFiles(this.files)">
+  <div class="upload-zone" onclick="document.getElementById('fileInput').click()"
+       ondragover="event.preventDefault();this.classList.add('drag')"
+       ondragleave="this.classList.remove('drag')"
+       ondrop="event.preventDefault();this.classList.remove('drag');handleFiles(event.dataTransfer.files)">
+    <div class="upload-icon">📂</div>
+    <div class="upload-title">Arrastra o haz clic para cargar archivos</div>
+    <div class="upload-sub">Formatos soportados: Excel (.xlsx) con libro de ventas · PDF Carpeta Tributaria SII · CSV</div>
+  </div>
+  <div id="uploadLog" style="font-size:12px;color:var(--text2);line-height:1.8;"></div>
+
+  <div class="section-label" style="margin-top:24px;">Archivos cargados</div>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>Archivo</th><th>Tipo</th><th>Períodos detectados</th><th>Estado</th></tr></thead>
+      <tbody id="fileTable">
+        <tr>
+          <td>Carpeta_tributaria_Hugo.pdf</td>
+          <td>Carpeta Tributaria SII</td>
+          <td>Abr 2023 – Feb 2026 (36 períodos)</td>
+          <td><span class="semaforo verde">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>MES_MARZO_2026_redital_revisado.xlsx</td>
+          <td>Libro de ventas Excel</td>
+          <td>Marzo 2026 (1 período)</td>
+          <td><span class="semaforo verde">PROCESADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const RAW = [
+  {p:"2023-04",b:5679435,d:1079093,c:1079093,iva:54543,ppm:14378},
+  {p:"2023-05",b:1769000,d:335925,c:402789,iva:125980,ppm:4416},
+  {p:"2023-06",b:5169469,d:1137999,c:624884,iva:578644,ppm:14974},
+  {p:"2023-07",b:4061653,d:771738,c:556322,iva:269166,ppm:5077},
+  {p:"2023-08",b:6582290,d:1884934,c:1035703,iva:112590,ppm:9652},
+  {p:"2023-09",b:6638020,d:1242258,c:1305165,iva:34892,ppm:8173},
+  {p:"2023-10",b:7960820,d:1399010,c:715183,iva:294058,ppm:10224},
+  {p:"2023-11",b:8377670,d:1883256,c:786424,iva:919252,ppm:10465},
+  {p:"2023-12",b:9667578,d:1836777,c:1647994,iva:1647994,ppm:12084},
+  {p:"2024-01",b:5128773,d:974461,c:331799,iva:701878,ppm:6411},
+  {p:"2024-02",b:14083650,d:252020,c:13314,iva:176382,ppm:1145},
+  {p:"2024-03",b:7270118,d:1381330,c:424038,iva:68751,ppm:9033},
+  {p:"2024-04",b:6549754,d:1215718,c:2767512,iva:84960,ppm:6187},
+  {p:"2024-05",b:14100000,d:2978239,c:1510468,iva:733775,ppm:17628},
+  {p:"2024-06",b:8814062,d:1379694,c:935589,iva:957731,ppm:10393},
+  {p:"2024-07",b:8236253,d:1564888,c:283097,iva:1783098,ppm:10235},
+  {p:"2024-08",b:9540088,d:2046046,c:1494712,iva:1623119,ppm:11335},
+  {p:"2024-09",b:5610715,d:1101598,c:1047030,iva:883057,ppm:6888},
+  {p:"2024-10",b:13020099,d:3076650,c:2750703,iva:136994,ppm:16317},
+  {p:"2024-11",b:22599250,d:4538318,c:2316448,iva:2387329,ppm:28249},
+  {p:"2024-12",b:20287000,d:4087147,c:3182437,iva:211080,ppm:35352},
+  {p:"2025-01",b:11389063,d:2163260,c:2694225,iva:192978,ppm:25484},
+  {p:"2025-02",b:10071005,d:2182363,c:1813503,iva:899008,ppm:25175},
+  {p:"2025-03",b:10066227,d:2595354,c:547870,iva:1500536,ppm:35186},
+  {p:"2025-04",b:15236600,d:3371349,c:352140,iva:2897028,ppm:21476},
+  {p:"2025-05",b:21212650,d:1484392,c:177835,iva:1259257,ppm:27214},
+  {p:"2025-06",b:6490430,d:1233563,c:312949,iva:1009352,ppm:19824},
+  {p:"2025-07",b:9262802,d:1759953,c:381003,iva:1487677,ppm:23137},
+  {p:"2025-08",b:6790303,d:1489945,c:192785,iva:1214155,ppm:18391},
+  {p:"2025-09",b:12668040,d:3395014,c:191158,iva:201328,ppm:36094},
+  {p:"2025-10",b:6345671,d:1335887,c:237027,iva:1071882,ppm:7933},
+  {p:"2025-11",b:14270284,d:2988755,c:210088,iva:328478,ppm:17335},
+  {p:"2025-12",b:25090300,d:5989332,c:1438353,iva:306280,ppm:31613},
+  {p:"2026-01",b:11586063,d:2163260,c:240516,iva:1143399,ppm:8947},
+  {p:"2026-02",b:8562000,d:1254882,c:1054882,iva:1143399,ppm:20350},
+  {p:"2026-03",b:19603268,d:3094103,c:3094103,iva:3029138,ppm:20335},
+];
+
+const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MONTHS_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let currentPeriod = 12;
+let charts = {};
+
+function fmt(n) {
+  if(n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if(n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if(n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-CL');
+}
+function fmtFull(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+function pLabel(p) {
+  const [y,m] = p.split('-');
+  return MONTHS_ES[parseInt(m)-1] + ' ' + y.slice(2);
+}
+function pLabelFull(p) {
+  const [y,m] = p.split('-');
+  return MONTHS_FULL[parseInt(m)-1] + ' ' + y;
+}
+function pct(n) { return (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; }
+
+function getData() {
+  return RAW.slice(-currentPeriod);
+}
+function getPrev() {
+  const total = RAW.length;
+  const start = Math.max(0, total - currentPeriod*2);
+  const end = total - currentPeriod;
+  return RAW.slice(start, end);
+}
+
+function updateAll() {
+  const data = getData();
+  const prev = getPrev();
+  const labels = data.map(d => pLabel(d.p));
+
+  const sumBase = data.reduce((s,d)=>s+d.b,0);
+  const sumIva  = data.reduce((s,d)=>s+d.iva,0);
+  const sumPpm  = data.reduce((s,d)=>s+d.ppm,0);
+  const prom    = sumBase / data.length;
+
+  const prevBase = prev.length ? prev.reduce((s,d)=>s+d.b,0) : sumBase;
+  const prevProm = prev.length ? prevBase/prev.length : prom;
+
+  const growthPct = ((prom - prevProm)/prevProm*100);
+  const baseDeltaPct = ((sumBase - prevBase)/prevBase*100);
+
+  // KPIs
+  document.getElementById('kpi-base').textContent = fmt(sumBase);
+  document.getElementById('kpi-base-delta').textContent = (baseDeltaPct>=0?'↑ ':'↓ ') + Math.abs(baseDeltaPct).toFixed(1) + '% vs período anterior';
+  document.getElementById('kpi-base-delta').className = 'kpi-delta ' + (baseDeltaPct>=0?'up':'down');
+
+  document.getElementById('kpi-prom').textContent = fmt(prom);
+  document.getElementById('kpi-prom-sub').textContent = 'Prom anterior: ' + fmt(prevProm);
+
+  document.getElementById('kpi-iva').textContent = fmt(sumIva);
+  const ivaDelta = prev.length ? ((sumIva - prev.reduce((s,d)=>s+d.iva,0))/prev.reduce((s,d)=>s+d.iva,1)*100) : 0;
+  document.getElementById('kpi-iva-delta').textContent = (ivaDelta>=0?'↑ ':'↓ ') + Math.abs(ivaDelta).toFixed(1) + '% vs anterior';
+  document.getElementById('kpi-iva-delta').className = 'kpi-delta ' + (ivaDelta<=0?'up':'down');
+
+  document.getElementById('kpi-ppm').textContent = fmt(sumPpm);
+  document.getElementById('kpi-trend').textContent = pct(growthPct);
+  document.getElementById('kpi-trend').style.color = growthPct >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('kpi-trend-card').querySelector('.kpi-sub').textContent = 'Promedio mensual';
+
+  // Score
+  const score = calcScore(data);
+  document.getElementById('ringScore').textContent = score;
+  const dash = 314;
+  document.getElementById('ringCircle').setAttribute('stroke-dashoffset', dash - (dash * score/100));
+  document.getElementById('ringCircle').setAttribute('stroke', score>=70?'#2ECC8A':score>=50?'#F5A623':'#E5504A');
+
+  // Period range
+  document.getElementById('periodRange').textContent = pLabelFull(data[0].p) + ' → ' + pLabelFull(data[data.length-1].p);
+
+  // Health status
+  const hEl = document.getElementById('kpi-health');
+  if(score >= 70) hEl.innerHTML = '<span class="semaforo verde" style="font-size:13px">SALUDABLE</span>';
+  else if(score >= 50) hEl.innerHTML = '<span class="semaforo amarillo" style="font-size:13px">ATENCIÓN</span>';
+  else hEl.innerHTML = '<span class="semaforo rojo" style="font-size:13px">CRÍTICO</span>';
+
+  updateCharts(data, labels);
+  updateInsights(data);
+  updateTable(data);
+  updateIvaTab(data);
+  updateProjection();
+}
+
+function calcScore(data) {
+  let score = 0;
+  // Growth (30 pts)
+  const first3 = data.slice(0,3).reduce((s,d)=>s+d.b,0)/3;
+  const last3  = data.slice(-3).reduce((s,d)=>s+d.b,0)/3;
+  const growth = (last3-first3)/first3*100;
+  score += Math.min(30, Math.max(0, 15 + growth * 0.3));
+  // IVA regularity (25 pts)
+  const ivaRatios = data.map(d => d.iva/d.b);
+  const ivaAvg = ivaRatios.reduce((s,v)=>s+v,0)/ivaRatios.length;
+  const ivaStd = Math.sqrt(ivaRatios.map(v=>(v-ivaAvg)**2).reduce((s,v)=>s+v,0)/ivaRatios.length);
+  score += Math.max(0, 25 - ivaStd*100);
+  // Stability (25 pts)
+  const bases = data.map(d=>d.b);
+  const avg = bases.reduce((s,v)=>s+v,0)/bases.length;
+  const cv = Math.sqrt(bases.map(v=>(v-avg)**2).reduce((s,v)=>s+v,0)/bases.length)/avg;
+  score += Math.max(0, 25 - cv*25);
+  // PPM (20 pts)
+  const ppmOk = data.filter(d=>d.ppm>0).length/data.length;
+  score += ppmOk * 20;
+  return Math.round(Math.min(100, Math.max(0, score)));
+}
+
+function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function updateCharts(data, labels) {
+  const bases = data.map(d=>d.b);
+  const ivas  = data.map(d=>d.iva);
+  const ppms  = data.map(d=>d.ppm);
+
+  // Moving average
+  const ma3 = bases.map((v,i) => {
+    const sl = bases.slice(Math.max(0,i-2), i+1);
+    return sl.reduce((a,b)=>a+b,0)/sl.length;
+  });
+
+  // Variacion %
+  const vars = bases.map((v,i) => i===0 ? 0 : (v-bases[i-1])/bases[i-1]*100);
+
+  const gridColor = 'rgba(42,63,88,0.6)';
+  const tickColor = '#5A7A9A';
+
+  // Chart 1: Base
+  destroyChart('chartBase');
+  charts['chartBase'] = new Chart(document.getElementById('chartBase'), {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Base Imponible',data:bases,backgroundColor:'rgba(74,144,217,0.35)',borderColor:'#4A90D9',borderWidth:1.5,borderRadius:3},
+        {label:'Prom. móvil 3M',data:ma3,type:'line',borderColor:'#B8962E',borderWidth:2,pointRadius:0,tension:.4,fill:false}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickColor,font:{size:11}}}},
+      scales:{x:{ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
+              y:{ticks:{color:tickColor,font:{size:10},callback:v=>fmt(v)},grid:{color:gridColor}}}}
+  });
+
+  // Chart 2: IVA + PPM
+  destroyChart('chartIvaPpm');
+  charts['chartIvaPpm'] = new Chart(document.getElementById('chartIvaPpm'), {
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'IVA a pagar',data:ivas,backgroundColor:'rgba(245,166,35,0.5)',borderColor:'#F5A623',borderWidth:1.5,borderRadius:2},
+      {label:'PPM',data:ppms,backgroundColor:'rgba(46,204,138,0.4)',borderColor:'#2ECC8A',borderWidth:1.5,borderRadius:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickColor,font:{size:11}}}},
+      scales:{x:{ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
+              y:{ticks:{color:tickColor,font:{size:10},callback:v=>fmt(v)},grid:{color:gridColor}}}}
+  });
+
+  // Chart 3: Variacion
+  destroyChart('chartVariacion');
+  charts['chartVariacion'] = new Chart(document.getElementById('chartVariacion'), {
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Var. % mensual',
+      data:vars,
+      backgroundColor:vars.map(v=>v>=0?'rgba(46,204,138,0.5)':'rgba(229,80,74,0.5)'),
+      borderColor:vars.map(v=>v>=0?'#2ECC8A':'#E5504A'),
+      borderWidth:1.5,borderRadius:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickColor,font:{size:11}}}},
+      scales:{x:{ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
+              y:{ticks:{color:tickColor,font:{size:10},callback:v=>v.toFixed(0)+'%'},grid:{color:gridColor}}}}
+  });
+}
+
+function updateInsights(data) {
+  const bases = data.map(d=>d.b);
+  const avg = bases.reduce((s,v)=>s+v,0)/bases.length;
+  const last = bases[bases.length-1];
+  const max = Math.max(...bases);
+  const maxPer = data[bases.indexOf(max)].p;
+  const growth = (bases[bases.length-1] - bases[0])/bases[0]*100;
+  const ivaTotal = data.reduce((s,d)=>s+d.iva,0);
+  const baseTotal = data.reduce((s,d)=>s+d.b,0);
+  const ivaRatio = ivaTotal/baseTotal*100;
+
+  const ins = [
+    {type:growth>=20?'green':growth>=0?'amber':'red',
+     title:'Tendencia de ingresos',
+     body:`La base imponible ${growth>=0?'creció':'cayó'} un ${Math.abs(growth).toFixed(1)}% durante el período analizado. El promedio mensual es ${fmt(avg)}. ${last>avg?'El último mes supera el promedio, señal positiva.':'El último mes está por debajo del promedio.'}`},
+    {type:ivaRatio<15?'green':ivaRatio<25?'amber':'red',
+     title:'Carga tributaria IVA',
+     body:`El IVA pagado representa el ${ivaRatio.toFixed(1)}% de los ingresos netos del período. ${ivaRatio<15?'Nivel adecuado, posiblemente por buenos créditos fiscales.':ivaRatio<25?'Nivel moderado. Revisar estrategia de créditos fiscales.':'Carga alta. Evaluar optimización de créditos IVA con el contador.'}`},
+    {type:'blue',
+     title:'Mes de mayor actividad',
+     body:`El período de mayor base imponible fue ${pLabelFull(maxPer)} con ${fmt(max)}. ${maxPer.includes('11')||maxPer.includes('12')?'Coherente con estacionalidad de fin de año.':maxPer.includes('05')||maxPer.includes('04')?'Peak en temporada media del año.':'Analizar factores que impulsaron este resultado.'}`},
+    {type:data.every(d=>d.ppm>0)?'green':'amber',
+     title:'Cumplimiento PPM',
+     body:`${data.filter(d=>d.ppm>0).length} de ${data.length} períodos registran PPM. ${data.every(d=>d.ppm>0)?'Cumplimiento total durante el período. Buena provisión para renta anual.':'Hay períodos sin PPM. Revisar con el contador para evitar diferencias en renta anual.'}`}
+  ];
+
+  document.getElementById('insightContainer').innerHTML = ins.map(i=>`
+    <div class="insight ${i.type}">
+      <div class="insight-title">${i.title}</div>
+      <div class="insight-body">${i.body}</div>
+    </div>`).join('');
+}
+
+function updateTable(data) {
+  const rows = [...data].reverse().map((d,i,arr) => {
+    const prev = arr[i+1];
+    const varPct = prev ? (d.b-prev.b)/prev.b*100 : null;
+    const estado = d.b > data.reduce((s,x)=>s+x.b,0)/data.length
+      ? '<span class="semaforo verde">SOBRE PROM</span>'
+      : '<span class="semaforo amarillo">BAJO PROM</span>';
+    return `<tr>
+      <td>${pLabelFull(d.p)}</td>
+      <td class="num">${fmtFull(d.b)}</td>
+      <td class="num">${fmtFull(d.d)}</td>
+      <td class="num">${fmtFull(d.c)}</td>
+      <td class="num">${fmtFull(d.iva)}</td>
+      <td class="num">${fmtFull(d.ppm)}</td>
+      <td class="${varPct===null?'num':varPct>=0?'pos':'neg'}">${varPct===null?'—':pct(varPct)}</td>
+      <td style="text-align:center">${estado}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tableBody').innerHTML = rows;
+
+  // Full chart
+  const allBases = RAW.map(d=>d.b);
+  const allLabels = RAW.map(d=>pLabel(d.p));
+  const ma6 = allBases.map((v,i)=>{const s=allBases.slice(Math.max(0,i-5),i+1);return s.reduce((a,b)=>a+b,0)/s.length;});
+  destroyChart('chartBaseFull');
+  charts['chartBaseFull'] = new Chart(document.getElementById('chartBaseFull'),{
+    type:'bar',data:{labels:allLabels,datasets:[
+      {label:'Base Imponible',data:allBases,backgroundColor:'rgba(74,144,217,0.3)',borderColor:'#4A90D9',borderWidth:1,borderRadius:2},
+      {label:'Media móvil 6M',data:ma6,type:'line',borderColor:'#B8962E',borderWidth:2.5,pointRadius:0,tension:.5,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#5A7A9A',font:{size:9}},grid:{color:'rgba(42,63,88,0.6)'}},
+              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
+  });
+
+  // Trimestral
+  const trims = {};
+  RAW.forEach(d=>{const [y,m]=d.p.split('-');const q=Math.ceil(parseInt(m)/3);const k=`${y} Q${q}`;trims[k]=(trims[k]||0)+d.b;});
+  const tk=Object.keys(trims).slice(-8);
+  destroyChart('chartTrimestre');
+  charts['chartTrimestre'] = new Chart(document.getElementById('chartTrimestre'),{
+    type:'bar',data:{labels:tk,datasets:[{label:'Base Imponible',data:tk.map(k=>trims[k]),
+      backgroundColor:'rgba(184,150,46,0.4)',borderColor:'#B8962E',borderWidth:1.5,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#5A7A9A',font:{size:9}},grid:{color:'rgba(42,63,88,0.6)'}},
+              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
+  });
+
+  // Estacionalidad
+  const byMonth = {};
+  RAW.forEach(d=>{const m=parseInt(d.p.split('-')[1])-1;if(!byMonth[m])byMonth[m]=[];byMonth[m].push(d.b);});
+  const estData = Array.from({length:12},(_,i)=>byMonth[i]?(byMonth[i].reduce((a,b)=>a+b,0)/byMonth[i].length):0);
+  destroyChart('chartEstacional');
+  charts['chartEstacional'] = new Chart(document.getElementById('chartEstacional'),{
+    type:'bar',data:{labels:MONTHS_ES,datasets:[{label:'Prom. mensual histórico',data:estData,
+      backgroundColor:estData.map(v=>v>estData.reduce((a,b)=>a+b,0)/12*1.1?'rgba(46,204,138,0.5)':'rgba(74,144,217,0.35)'),
+      borderWidth:1.5,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#5A7A9A',font:{size:9}},grid:{color:'rgba(42,63,88,0.6)'}},
+              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
+  });
+}
+
+function updateIvaTab(data) {
+  const ivas = data.map(d=>d.iva);
+  const bases = data.map(d=>d.b);
+  const prom = ivas.reduce((a,b)=>a+b,0)/ivas.length;
+  const maxI = ivas.indexOf(Math.max(...ivas));
+  const minI = ivas.indexOf(Math.min(...ivas));
+  const ratio = ivas.reduce((a,b)=>a+b,0)/bases.reduce((a,b)=>a+b,0)*100;
+
+  document.getElementById('kpi-iva-prom').textContent = fmt(prom);
+  document.getElementById('kpi-iva-max-mes').textContent = pLabel(data[maxI].p);
+  document.getElementById('kpi-iva-min-mes').textContent = pLabel(data[minI].p);
+  document.getElementById('kpi-iva-ratio').textContent = ratio.toFixed(1) + '%';
+
+  const labels = data.map(d=>pLabel(d.p));
+  destroyChart('chartIvaDetalle');
+  charts['chartIvaDetalle'] = new Chart(document.getElementById('chartIvaDetalle'),{
+    type:'bar',data:{labels,datasets:[
+      {label:'Débitos IVA',data:data.map(d=>d.d),backgroundColor:'rgba(229,80,74,0.35)',borderColor:'#E5504A',borderWidth:1.5,borderRadius:2},
+      {label:'Créditos IVA',data:data.map(d=>d.c),backgroundColor:'rgba(46,204,138,0.35)',borderColor:'#2ECC8A',borderWidth:1.5,borderRadius:2},
+      {label:'IVA neto a pagar',data:data.map(d=>d.iva),type:'line',borderColor:'#F5A623',borderWidth:2.5,pointRadius:3,tension:.4,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#5A7A9A',font:{size:10}},grid:{color:'rgba(42,63,88,0.6)'}},
+              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
+  });
+
+  document.getElementById('ivaInsights').innerHTML = `
+    <div class="insight amber">
+      <div class="insight-title">Optimización de créditos IVA</div>
+      <div class="insight-body">El ratio IVA pagado / ingresos es ${ratio.toFixed(1)}%. Un ratio saludable para servicios está entre 8–15%. ${ratio>20?'Evaluar con el contador si hay oportunidades de créditos IVA no utilizados (compras, activos).':'El nivel actual es manejable.'}</div>
+    </div>
+    <div class="insight blue">
+      <div class="insight-title">Mes de mayor presión tributaria</div>
+      <div class="insight-body">El mes con mayor IVA pagado fue ${pLabelFull(data[maxI].p)} con ${fmtFull(data[maxI].iva)}. Planificar el flujo de caja considerando este pico estacional para evitar apuros de liquidez.</div>
+    </div>`;
+}
+
+function updateProjection() {
+  // Last 6 months as base for projection
+  const recent = RAW.slice(-6);
+  const avgBase = recent.reduce((s,d)=>s+d.b,0)/recent.length;
+  const avgIva  = recent.reduce((s,d)=>s+d.iva,0)/recent.length;
+  const avgPpm  = recent.reduce((s,d)=>s+d.ppm,0)/recent.length;
+
+  // Seasonal factors by month
+  const byMonth = {};
+  RAW.forEach(d=>{const m=parseInt(d.p.split('-')[1])-1;if(!byMonth[m])byMonth[m]=[];byMonth[m].push(d.b);});
+  const monthAvg = Array.from({length:12},(_,i)=>byMonth[i]?(byMonth[i].reduce((a,b)=>a+b,0)/byMonth[i].length):avgBase);
+  const globalAvg = monthAvg.reduce((a,b)=>a+b,0)/12;
+  const factors = monthAvg.map(v=>v/globalAvg);
+
+  // Next 6 months
+  const lastDate = RAW[RAW.length-1].p;
+  const [ly,lm] = lastDate.split('-').map(Number);
+  const projMonths = [];
+  for(let i=1;i<=6;i++){
+    const d = new Date(ly, lm-1+i, 1);
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const base = avgBase * factors[m] * (1 + 0.02*i); // slight growth trend
+    projMonths.push({p:`${y}-${String(m+1).padStart(2,'0')}`,base,iva:base*0.145,ppm:base*0.012,factor:factors[m]});
+  }
+
+  // Projection chart
+  const histLabels = RAW.slice(-12).map(d=>pLabel(d.p));
+  const histBases  = RAW.slice(-12).map(d=>d.b);
+  const projLabels = projMonths.map(d=>pLabel(d.p));
+  const projBases  = projMonths.map(d=>Math.round(d.base));
+  const allLabels  = [...histLabels, ...projLabels];
+  const allHist    = [...histBases, ...Array(6).fill(null)];
+  const allProj    = [...Array(12).fill(null), ...projBases];
+  const allProjHi  = [...Array(12).fill(null), ...projBases.map(v=>Math.round(v*1.15))];
+  const allProjLo  = [...Array(12).fill(null), ...projBases.map(v=>Math.round(v*0.85))];
+
+  destroyChart('chartProyeccion');
+  charts['chartProyeccion'] = new Chart(document.getElementById('chartProyeccion'),{
+    type:'line',
+    data:{labels:allLabels,datasets:[
+      {label:'Histórico',data:allHist,borderColor:'#4A90D9',backgroundColor:'rgba(74,144,217,0.15)',borderWidth:2.5,pointRadius:3,tension:.4,fill:true},
+      {label:'Proyección',data:allProj,borderColor:'#B8962E',borderWidth:2.5,pointRadius:4,tension:.4,borderDash:[6,3],fill:false},
+      {label:'Banda alta (+15%)',data:allProjHi,borderColor:'rgba(184,150,46,0.3)',borderWidth:1,pointRadius:0,tension:.4,fill:'+1'},
+      {label:'Banda baja (-15%)',data:allProjLo,borderColor:'rgba(184,150,46,0.3)',borderWidth:1,pointRadius:0,tension:.4,backgroundColor:'rgba(184,150,46,0.08)',fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5A7A9A',font:{size:11},filter:i=>i.text!=='Banda alta (+15%)&&i.text!==Banda baja (-15%)'}}},
+      scales:{x:{ticks:{color:'#5A7A9A',font:{size:10}},grid:{color:'rgba(42,63,88,0.6)'}},
+              y:{ticks:{color:'#5A7A9A',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,63,88,0.6)'}}}}
+  });
+
+  // Proj cards
+  document.getElementById('projCards').innerHTML = projMonths.map(d=>`
+    <div class="proj-card">
+      <span class="proj-badge">PROYECCIÓN</span>
+      <div class="proj-month">${pLabelFull(d.p)}</div>
+      <div class="proj-row"><span class="proj-key">Base estimada</span><span class="proj-val">${fmt(d.base)}</span></div>
+      <div class="proj-row"><span class="proj-key">IVA estimado</span><span class="proj-val">${fmt(d.iva)}</span></div>
+      <div class="proj-row"><span class="proj-key">PPM estimado</span><span class="proj-val">${fmt(d.ppm)}</span></div>
+      <div class="proj-row"><span class="proj-key">Factor estacional</span><span class="proj-val">${(d.factor*100).toFixed(0)}%</span></div>
+    </div>`).join('');
+
+  document.getElementById('projInsights').innerHTML = `
+    <div class="insight amber">
+      <div class="insight-title">Metodología de proyección</div>
+      <div class="insight-body">La proyección combina el promedio de los últimos 6 meses con factores de estacionalidad calculados mes a mes sobre el historial de 36 períodos. Incluye una tendencia de crecimiento gradual del 2% mensual. La banda de confianza es ±15%.</div>
+    </div>
+    <div class="insight blue">
+      <div class="insight-title">Recomendación de actualización</div>
+      <div class="insight-body">Cargar el F29 de cada mes al cerrar el período para que la proyección se recalibre automáticamente con datos reales. La precisión mejora significativamente con datos actualizados.</div>
+    </div>`;
+}
+
+function setPeriod(n, el) {
+  currentPeriod = n;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  updateAll();
+}
+
+function showTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+const API_URL = "https://kl-backend-4gk3.onrender.com";
+
+async function handleFiles(files) {
+  const log = document.getElementById('uploadLog');
+  const tbody = document.getElementById('fileTable');
+
+  for (const f of Array.from(files)) {
+    const isPDF  = f.name.toLowerCase().endsWith('.pdf');
+    const isXLSX = f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls');
+    const tipo   = isPDF ? 'PDF Carpeta Tributaria SII' : 'Excel de ventas';
+
+    log.innerHTML += `<div>⏳ Enviando <strong>${f.name}</strong> (${(f.size/1024).toFixed(1)} KB) al servidor...</div>`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${f.name}</td><td>${tipo}</td><td>Procesando...</td><td><span class="semaforo amarillo">PROCESANDO</span></td>`;
+    tbody.appendChild(tr);
+
+    try {
+      const endpoint = isPDF ? '/upload/f29' : '/upload/ventas';
+      const formData = new FormData();
+      formData.append('file', f);
+
+      const resp = await fetch(API_URL + endpoint, { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error(`Error HTTP ${resp.status}`);
+      const data = await resp.json();
+
+      if (isPDF && data.datos) {
+        const n = data.periodos_extraidos;
+        log.innerHTML += `<div style="color:var(--green)">✓ ${f.name} — ${n} períodos F29 extraídos y cargados al dashboard.</div>`;
+        tr.cells[2].textContent = `${n} períodos detectados`;
+        tr.cells[3].innerHTML = '<span class="semaforo verde">PROCESADO</span>';
+
+        // Merge new data into RAW and refresh dashboard
+        if (data.datos.length > 0) {
+          data.datos.forEach(d => {
+            if (!RAW.find(r => r.p === d.period)) {
+              RAW.push({
+                p: d.period,
+                b: d.base_imponible || 0,
+                d: d.debitos_iva || 0,
+                c: d.creditos_iva || 0,
+                iva: d.iva_pagar || 0,
+                ppm: d.ppm || 0
+              });
+            }
+          });
+          RAW.sort((a,b) => a.p.localeCompare(b.p));
+          document.getElementById('totalPeriods').textContent = RAW.length;
+          document.getElementById('lastPeriod').textContent = pLabelFull(RAW[RAW.length-1].p);
+          updateAll();
+          log.innerHTML += `<div style="color:var(--green)">↻ Dashboard actualizado con ${RAW.length} períodos totales.</div>`;
+        }
+
+      } else if (isXLSX && data.resumen) {
+        const r = data.resumen;
+        const period = r.period || 'período';
+        log.innerHTML += `<div style="color:var(--green)">✓ ${f.name} — Ventas ${period}: Netas $${Math.round(r.ventas_netas||0).toLocaleString('es-CL')} · Rentabilidad ${r.rentabilidad_pct||0}%</div>`;
+        tr.cells[2].textContent = period;
+        tr.cells[3].innerHTML = '<span class="semaforo verde">PROCESADO</span>';
+      } else {
+        log.innerHTML += `<div style="color:var(--amber)">⚠ ${f.name} procesado pero sin datos reconocibles.</div>`;
+        tr.cells[3].innerHTML = '<span class="semaforo amarillo">REVISIÓN</span>';
+      }
+
+    } catch(err) {
+      log.innerHTML += `<div style="color:var(--red)">✗ Error procesando ${f.name}: ${err.message}</div>`;
+      tr.cells[3].innerHTML = '<span class="semaforo rojo">ERROR</span>';
+    }
+  }
+}
+
+function exportPDF() {
+  alert('Para exportar: usa Ctrl+P en tu navegador y selecciona "Guardar como PDF". El dashboard se imprime completo con todos los gráficos.');
+}
+
+// INIT
+updateAll();
+</script>
+</body>
+</html>
